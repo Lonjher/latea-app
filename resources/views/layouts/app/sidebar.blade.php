@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{
     darkMode: localStorage.getItem('darkMode') ?
-        localStorage.getItem('darkMode') === 'true' :
-        window.matchMedia('(prefers-color-scheme: dark)').matches
+        localStorage.getItem('darkMode') === 'true' : window.matchMedia('(prefers-color-scheme: dark)').matches
 }" x-init="$watch('darkMode', val => {
     localStorage.setItem('darkMode', val);
     document.documentElement.classList.toggle('dark', val);
@@ -27,8 +26,8 @@
                     <img src="{{ asset('assets/logo.webp') }}" alt="Logo" class="w-8" />
                 </div>
                 <div class="min-w-0">
-                    <div class="sidebar-logo-name">SMILE</div>
-                    <div class="sidebar-logo-sub">Sistem Manajemen Inventaris</div>
+                    <div class="sidebar-logo-name">Latea App</div>
+                    <div class="sidebar-logo-sub">Latea Point of Sale Information System</div>
                 </div>
             </a>
 
@@ -50,28 +49,32 @@
 
                 <div class="sidebar-group" x-data="{ open: {{ request()->routeIs(['admin.*', 'koordinator.*', 'user.*']) ? 'true' : 'false' }} }">
 
-                    @can('isSuperAdminAndAdmin')
+                    @can('isAdmin')
                         {{-- Label Grup Menu --}}
                         <div class="sidebar-group-label">{{ __('Administrator') }}</div>
-                        {{-- Departemen --}}
-                        <a href="{{ route('admin.departemens') }}" wire:navigate
-                            class="sidebar-item {{ request()->routeIs('admin.departemens') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
+                        {{-- Stores --}}
+                        <a href="{{ route('admin.stores') }}" wire:navigate
+                            class="sidebar-item {{ request()->routeIs('admin.stores') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
                             <div class="flex items-center gap-2.5">
-                                {{-- Ikon Departemens --}}
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    stroke-width="1.5" stroke="currentColor"
-                                    class="h-3.5 w-3.5 shrink-0 text-stone-400 group-[.active]:text-current dark:text-stone-500">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205 3 1m1.5.5-1.5-.5M6.75 7.364V3h-3v18m3-13.636 10.5-3.819" />
+                                {{-- Ikon Stores --}}
+                                <svg data-slot="icon" fill="none" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z"></path>
                                 </svg>
 
-                                <span class="font-medium">{{ __('Departemens') }}</span>
+                                <span class="font-medium">{{ __('Stores') }}</span>
                             </div>
+                        </a>
+                        {{-- Products --}}
+                        <a href="{{ route('admin.products') }}" wire:navigate
+                            class="sidebar-item {{ request()->routeIs('admin.products') ? 'active' : '' }} flex items-center gap-2 text-[11px]">
+                            <svg class="w-4 h-4 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20 7h-.7c.229-.467.349-.98.351-1.5a3.5 3.5 0 0 0-3.5-3.5c-1.717 0-3.215 1.2-4.331 2.481C10.4 2.842 8.949 2 7.5 2A3.5 3.5 0 0 0 4 5.5c.003.52.123 1.033.351 1.5H4a2 2 0 0 0-2 2v2a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V9a2 2 0 0 0-2-2Zm-9.942 0H7.5a1.5 1.5 0 0 1 0-3c.9 0 2 .754 3.092 2.122-.219.337-.392.635-.534.878Zm6.1 0h-3.742c.933-1.368 2.371-3 3.739-3a1.5 1.5 0 0 1 0 3h.003ZM13 14h-2v8h2v-8Zm-4 0H4v6a2 2 0 0 0 2 2h3v-8Zm6 0v8h3a2 2 0 0 0 2-2v-6h-5Z"/>
+                            </svg>
+                            <span>{{ __('Products') }}</span>
                         </a>
 
                         {{-- User Navigasi --}}
                         <div>
-                            {{-- Dropdown Trigger (User) --}}
                             <button @click="open = !open"
                                 class="sidebar-item flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
                                 <div class="flex items-center gap-2.5">
@@ -82,7 +85,7 @@
                                             d="M4.5 12a7.5 7.5 0 0 0 15 0m-15 0a7.5 7.5 0 1 1 15 0m-15 0H3m16.5 0H21m-1.5 0H12m-8.457 3.077 1.41-.513m14.095-5.13 1.41-.513M5.106 17.785l1.15-.964m11.49-9.642 1.149-.964M7.501 19.795l.75-1.3m7.5-12.99.75-1.3m-6.063 16.658.26-1.477m2.605-14.772.26-1.477m0 17.726-.26-1.477M10.698 4.614l-.26-1.477M16.5 19.794l-.75-1.299M7.5 4.205 12 12m6.894 5.785-1.149-.964M6.256 7.178l-1.15-.964m15.352 8.864-1.41-.513M4.954 9.435l-1.41-.514M12.002 12l-3.75 6.495" />
                                     </svg>
 
-                                    <span class="font-medium">{{ __('User') }}</span>
+                                    <span class="font-medium">{{ __('Account') }}</span>
                                 </div>
 
                                 {{-- Ikon Chevron (Berputar otomatis menggunakan Alpine) --}}
@@ -94,100 +97,28 @@
                                 </svg>
                             </button>
 
-                            {{-- Sub Navigasi Vertikal --}}
                             <div x-show="open" x-collapse class="mt-0.5 flex flex-col space-y-0.5 pl-4 pr-1"
                                 style="display: none;">
 
-                                @can('isSuperAdmin')
-                                    {{-- Admin --}}
-                                    <a href="{{ route('admin.admins') }}" wire:navigate
-                                        class="sidebar-item {{ request()->routeIs('admin.admins') ? 'active' : '' }} flex items-center gap-2 py-1 pl-3 text-[11px]">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                            stroke-width="1.8" stroke="currentColor"
-                                            class="h-3.5 w-3.5 shrink-0 text-stone-400 group-[.active]:text-current dark:text-stone-500">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                                        </svg>
-                                        <span>{{ __('Admin') }}</span>
-                                    </a>
-                                @endcan
-
-                                {{-- Koordinator --}}
-                                <a href="{{ route('admin.koordinators') }}" wire:navigate
-                                    class="sidebar-item {{ request()->routeIs('admin.koordinators') ? 'active' : '' }} flex items-center gap-2 py-1 pl-3 text-[11px]">
+                                {{-- Cashier --}}
+                                <a href="{{ route('admin.cashiers') }}" wire:navigate
+                                    class="sidebar-item {{ request()->routeIs('admin.cashiers') ? 'active' : '' }} flex items-center gap-2 py-1 pl-3 text-[11px]">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                         stroke-width="1.8" stroke="currentColor"
                                         class="h-3.5 w-3.5 shrink-0 text-stone-400 group-[.active]:text-current dark:text-stone-500">
                                         <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
+                                            d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                                     </svg>
-                                    <span>{{ __('Koordinator') }}</span>
-                                </a>
-
-                                {{-- User --}}
-                                <a href="{{ route('admin.users') }}" wire:navigate
-                                    class="sidebar-item {{ request()->routeIs('admin.users') ? 'active' : '' }} flex items-center gap-2 py-1 pl-3 text-[11px]">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                        stroke-width="1.8" stroke="currentColor"
-                                        class="h-3.5 w-3.5 shrink-0 text-stone-400 group-[.active]:text-current dark:text-stone-500">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
-                                    </svg>
-                                    <span>{{ __('User') }}</span>
+                                    <span>{{ __('Cashier') }}</span>
                                 </a>
 
                             </div>
                         </div>
 
-                        {{-- Inventaris --}}
-                        <a href="{{ route('admin.inventaris') }}" wire:navigate
-                            class="sidebar-item {{ request()->routeIs('admin.inventaris') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
-                            <div class="flex items-center gap-2.5">
-                                {{-- Ikon Inventaris --}}
-                                <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                    <path fill-rule="evenodd"
-                                        d="M20 9c0 .55-.45 1-1 1h-2v2c0 .55-.45 1-1 1s-1-.45-1-1v-2h-2c-.55 0-1-.45-1-1s.45-1 1-1h2V6c0-.55.45-1 1-1s1 .45 1 1v2h2c.55 0 1 .45 1 1zM4 8h3V3H4v5zm-2 9h5v-7H2v7zm14-2c-.55 0-1 .45-1 1v1H9V6h3c.55 0 1-.45 1-1s-.45-1-1-1H9V2c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v6H1c-.55 0-1 .45-1 1v9c0 .55.45 1 1 1h15c.55 0 1-.45 1-1v-2c0-.55-.45-1-1-1z"
-                                        fill="currentColor" />
-                                </svg>
-
-                                <span class="font-medium">{{ __('Inventaris') }}</span>
-                            </div>
-                        </a>
-
-                        {{-- Peminjaman --}}
-                        <a href="{{ route('admin.peminjaman') }}" wire:navigate
-                            class="sidebar-item {{ request()->routeIs('admin.peminjaman') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
-                            <div class="flex items-center gap-2.5">
-                                {{-- Ikon Peminjamans --}}
-                                <svg fill="currentColor" version="1.1" id="Layer_1"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    class="{{ request()->routeIs('admin.peminjaman') ? 'w-3.5 h-3.5' : '' }} h-3 w-3"
-                                    xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 502.56 502.56"
-                                    xml:space="preserve">
-                                    <g>
-                                        <g>
-                                            <g>
-                                                <path
-                                                    d="M467.28,467.496h24v-128h-24V129.328l12.088,3.888l23.192-46.392L251.28,3.064L0,86.824l23.192,46.392l12.088-3.888  v354.168h-32v16h32h432h32v-16h-32V467.496z M475.28,355.496v96h-8v-96H475.28z M215.6,483.496H107.28v-216h80v184h-64v16h80v-16 v-184v-16v-16h16v180.32c-9.792,8.792-16,21.504-16,35.68C203.28,463.8,207.968,474.992,215.6,483.496z M251.28,483.496 c-17.648,0-32-14.352-32-32s14.352-32,32-32s32,14.352,32,32S268.928,483.496,251.28,483.496z M296.936,309.84l-11.312,11.312 l10.344,10.344l-31.04,31.04l32.464-119.04h92.256l29.6,82.896l-97.728,45.104h-42.928l28.688-28.688l10.344,10.344 l11.312-11.312L296.936,309.84z M236.528,405.84c-0.424,0.136-0.832,0.304-1.248,0.456v-138.8h38.984L236.528,405.84z M286.96,483.496c4.144-4.624,7.4-10.032,9.52-16h77.6c2.12,5.968,5.376,11.376,9.52,16H286.96z M419.28,483.496 c-17.648,0-32-14.352-32-32s14.352-32,32-32s32,14.352,32,32S436.928,483.496,419.28,483.496z M451.28,415.816  c-8.504-7.632-19.696-12.32-32-12.32c-26.472,0-48,21.528-48,48h-72c0-25.648-20.232-46.592-45.56-47.88l4.4-16.12h66.92 l99.608-45.976l4.992,13.976h21.64V415.816z M451.28,339.496h-10.36l-34.288-96h12.648v-16h-152v16h13.528l-2.184,8H235.28v-16 h16v-16h-80v16h16v16h-96v232h-40v-288h400V339.496z M451.28,179.496h-400v-55.312l200-64.28l200,64.288V179.496z M251.28,43.088L31.368,113.776L22.56,96.168l228.72-76.24L480,96.168l-8.808,17.608L251.28,43.088z" />
-                                                <rect x="243.28" y="91.496" width="16" height="16" />
-                                                <rect x="275.28" y="91.496" width="16" height="16" />
-                                                <rect x="211.28" y="91.496" width="16" height="16" />
-                                            </g>
-                                        </g>
-                                    </g>
-                                </svg>
-
-                                <span class="font-medium">{{ __('Peminjaman') }}</span>
-                            </div>
-                        </a>
-
-                        {{-- Navigasi Laporan --}}
-                        <div x-data="{ openL: {{ request()->routeIs(['admin.laporan-inventaris', 'admin.laporan-peminjaman']) ? 'true' : 'false' }} }">
-                            {{-- Dropdown Trigger (User) --}}
+                        {{-- <div x-data="{ openL: {{ request()->routeIs(['admin.laporan-inventaris', 'admin.laporan-peminjaman']) ? 'true' : 'false' }} }">
                             <button @click="openL = !openL"
                                 class="sidebar-item flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
                                 <div class="flex items-center gap-2.5">
-                                    {{-- Ikon Laporan --}}
                                     <svg class="h-3.5 w-3.5" viewBox="0 0 40 40" fill="none"
                                         xmlns="http://www.w3.org/2000/svg">
                                         <rect width="40" height="40" rx="8" fill="currentColor"
@@ -202,7 +133,6 @@
                                     <span class="font-medium">{{ __('Laporan') }}</span>
                                 </div>
 
-                                {{-- Ikon Chevron --}}
                                 <svg :class="openL ? 'rotate-180' : ''"
                                     class="h-3.5 w-3.5 text-stone-400 transition-transform duration-200 dark:text-stone-500"
                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -211,10 +141,8 @@
                                 </svg>
                             </button>
 
-                            {{-- Sub Navigasi Vertikal --}}
                             <div x-show="openL" x-collapse class="mt-0.5 flex flex-col space-y-0.5 pl-4 pr-1"
                                 style="display: none;">
-                                {{-- Laporan Inventaris --}}
                                 <a href="{{ route('admin.laporan-inventaris') }}" wire:navigate
                                     class="sidebar-item {{ request()->routeIs('admin.laporan-inventaris') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
                                     <div class="flex items-center gap-2.5">
@@ -242,7 +170,6 @@
                                     </div>
                                 </a>
 
-                                {{-- Laporan Peminjaman --}}
                                 <a href="{{ route('admin.laporan-peminjaman') }}" wire:navigate
                                     class="sidebar-item {{ request()->routeIs('admin.laporan-peminjaman') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
                                     <div class="flex items-center gap-2.5">
@@ -265,9 +192,9 @@
                                     </div>
                                 </a>
                             </div>
-                        </div>
+                        </div> --}}
                     @endcan
-                    @can('isKoordinator')
+                    @can('isCashier')
                         {{-- Inventaris Koordinator --}}
                         <a href="{{ route('koordinator.inventaris') }}" wire:navigate
                             class="sidebar-item {{ request()->routeIs('koordinator.inventaris') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
@@ -327,36 +254,6 @@
                                 </svg>
 
                                 <span class="font-medium">{{ __('Laporan') }}</span>
-                            </div>
-                        </a>
-                    @endcan
-                    @can('isUser')
-                        {{-- Label Grup Menu --}}
-                        <div class="sidebar-group-label">{{ __('Manajemen') }}</div>
-                        {{-- Peminjaman User --}}
-                        <a href="{{ route('user.peminjaman') }}" wire:navigate
-                            class="sidebar-item {{ request()->routeIs('user.peminjaman') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
-                            <div class="flex items-center gap-2.5">
-                                {{-- Ikon Peminjamans --}}
-                                <svg fill="currentColor" version="1.1" id="Layer_1"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    class="{{ request()->routeIs('user.peminjaman') ? 'w-3.5 h-3.5' : '' }} h-3 w-3"
-                                    xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 502.56 502.56"
-                                    xml:space="preserve">
-                                    <g>
-                                        <g>
-                                            <g>
-                                                <path
-                                                    d="M467.28,467.496h24v-128h-24V129.328l12.088,3.888l23.192-46.392L251.28,3.064L0,86.824l23.192,46.392l12.088-3.888  v354.168h-32v16h32h432h32v-16h-32V467.496z M475.28,355.496v96h-8v-96H475.28z M215.6,483.496H107.28v-216h80v184h-64v16h80v-16 v-184v-16v-16h16v180.32c-9.792,8.792-16,21.504-16,35.68C203.28,463.8,207.968,474.992,215.6,483.496z M251.28,483.496 c-17.648,0-32-14.352-32-32s14.352-32,32-32s32,14.352,32,32S268.928,483.496,251.28,483.496z M296.936,309.84l-11.312,11.312 l10.344,10.344l-31.04,31.04l32.464-119.04h92.256l29.6,82.896l-97.728,45.104h-42.928l28.688-28.688l10.344,10.344 l11.312-11.312L296.936,309.84z M236.528,405.84c-0.424,0.136-0.832,0.304-1.248,0.456v-138.8h38.984L236.528,405.84z M286.96,483.496c4.144-4.624,7.4-10.032,9.52-16h77.6c2.12,5.968,5.376,11.376,9.52,16H286.96z M419.28,483.496 c-17.648,0-32-14.352-32-32s14.352-32,32-32s32,14.352,32,32S436.928,483.496,419.28,483.496z M451.28,415.816  c-8.504-7.632-19.696-12.32-32-12.32c-26.472,0-48,21.528-48,48h-72c0-25.648-20.232-46.592-45.56-47.88l4.4-16.12h66.92 l99.608-45.976l4.992,13.976h21.64V415.816z M451.28,339.496h-10.36l-34.288-96h12.648v-16h-152v16h13.528l-2.184,8H235.28v-16 h16v-16h-80v16h16v16h-96v232h-40v-288h400V339.496z M451.28,179.496h-400v-55.312l200-64.28l200,64.288V179.496z M251.28,43.088L31.368,113.776L22.56,96.168l228.72-76.24L480,96.168l-8.808,17.608L251.28,43.088z" />
-                                                <rect x="243.28" y="91.496" width="16" height="16" />
-                                                <rect x="275.28" y="91.496" width="16" height="16" />
-                                                <rect x="211.28" y="91.496" width="16" height="16" />
-                                            </g>
-                                        </g>
-                                    </g>
-                                </svg>
-
-                                <span class="font-medium">{{ __('Peminjaman') }}</span>
                             </div>
                         </a>
                     @endcan

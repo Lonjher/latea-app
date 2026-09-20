@@ -14,6 +14,7 @@ use Illuminate\Support\Carbon;
  * @property boolean $is_active
  * @property Carbon $created_at
  * @property Carbon $updated_at
+ * @method <User> user()
  */
 
 #[Guarded(['id'])]
