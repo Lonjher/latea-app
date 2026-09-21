@@ -39,4 +39,9 @@ class Product extends Model
             ->withPivot(['price', 'is_available'])
             ->withTimestamps();
     }
+
+    public function saleItems()
+    {
+        return $this->hasMany(SaleItem::class);
+    }
 }

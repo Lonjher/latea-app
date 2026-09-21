@@ -32,4 +32,9 @@ class Store extends Model
             ->using(StoreProduct::class)
             ->withPivot(['price', 'is_available']);
     }
+
+    public function sales()
+    {
+        return $this->hasMany(Sale::class);
+    }
 }
