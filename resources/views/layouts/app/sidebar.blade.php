@@ -234,7 +234,7 @@
 
             {{-- Mobile header --}}
             <header class="mobile-header">
-                <button class="header-icon-btn" onclick="toggleSidebar()" aria-label="Menu">
+                <button class="shadow-sm rounded-lg header-icon-btn" onclick="toggleSidebar()" aria-label="Menu">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
                         <line x1="3" y1="6" x2="21" y2="6" />
@@ -242,9 +242,9 @@
                         <line x1="3" y1="18" x2="21" y2="18" />
                     </svg>
                 </button>
-                <span class="mobile-title">SMILE</span>
+                <span class="mobile-title">Latea App</span>
                 <flux:dropdown position="top" align="end">
-                    <flux:profile :initials="auth()->user()->initials()" icon-trailing="chevron-down" />
+                    <flux:profile class="shadow-sm" avatar:color="cyan" :initials="auth()->user()->initials()" icon-trailing="chevron-down" />
                     <flux:menu>
                         <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
                             {{ __('Settings') }}
