@@ -7,6 +7,8 @@ use App\Models\Sale;
 use App\Models\Store;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\FinancialAnalysisExport;
 
 new #[Title('Financial Analysis')] class extends Component {
     public $dateFrom;
@@ -125,6 +127,30 @@ new #[Title('Financial Analysis')] class extends Component {
         };
     }
 
+    public function export()
+    {
+        $from = Carbon::parse($this->dateFrom)->startOfDay();
+        $to = Carbon::parse($this->dateTo)->endOfDay();
+
+        // Hitung ulang data (biar tidak bergantung pada render terakhir)
+        $data = $this->with();
+
+        $storeName = $this->filterStore !== '' ? Store::find($this->filterStore)?->name : null;
+
+        $filename = 'financial-analysis-' . $this->dateFrom . '-to-' . $this->dateTo . ($storeName ? '-' . \Illuminate\Support\Str::slug($storeName) : '') . '.xlsx';
+
+        // Tambahkan () setelah FinancialAnalysisExport
+        return (new FinancialAnalysisExport(
+            metrics: $data['metrics'],
+            chartData: $data['chartData'],
+            topProducts: $data['topProducts'],
+            dateFrom: $this->dateFrom,
+            dateTo: $this->dateTo,
+            storeName: $storeName,
+            chartPeriod: $this->chartPeriod
+        ))->download($filename);
+    }
+
     public function with()
     {
         $from = Carbon::parse($this->dateFrom)->startOfDay();
@@ -209,7 +235,6 @@ new #[Title('Financial Analysis')] class extends Component {
 
 <div>
     <x-page-header title="Financial Analysis" leading="Analisis margin & kesehatan keuangan" />
-
     <div class="mx-auto mt-2 max-w-7xl space-y-3">
 
         <div x-data="salesChart({
@@ -236,113 +261,125 @@ new #[Title('Financial Analysis')] class extends Component {
                     </div>
                 </div>
 
-                {{-- Chart Type Switcher --}}
-                <div
-                    class="flex items-center gap-1 rounded-lg border border-stone-200 bg-stone-50 p-0.5 dark:border-stone-700 dark:bg-stone-800">
-                    <button wire:click="setChartType('candlestick')" type="button"
-                        class="cursor-pointer rounded-md px-2 py-1 text-[10px] font-medium transition
-                        {{ $chartType === 'candlestick'
-                            ? 'bg-white text-sage-700 shadow-sm dark:bg-stone-700 dark:text-sage-400'
-                            : 'text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200' }}">
-                        <span class="flex items-center gap-1">
-                            <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M3 4v16M3 9h4m-4 6h4m-4-3h4m13-8v16m0-13h-4m4 6h-4m4-3h-4" />
-                            </svg>
-                            Candle
-                        </span>
-                    </button>
-                    <button wire:click="setChartType('line')" type="button"
-                        class="cursor-pointer rounded-md px-2 py-1 text-[10px] font-medium transition
-                        {{ $chartType === 'line'
-                            ? 'bg-white text-sage-700 shadow-sm dark:bg-stone-700 dark:text-sage-400'
-                            : 'text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200' }}">
-                        <span class="flex items-center gap-1">
-                            <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 17l6-6 4 4 8-8" />
-                            </svg>
-                            Line
-                        </span>
-                    </button>
-                    <button wire:click="setChartType('bar')" type="button"
-                        class="cursor-pointer rounded-md px-2 py-1 text-[10px] font-medium transition
-                        {{ $chartType === 'bar'
-                            ? 'bg-white text-sage-700 shadow-sm dark:bg-stone-700 dark:text-sage-400'
-                            : 'text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200' }}">
-                        <span class="flex items-center gap-1">
-                            <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M3 20h18M7 20V10m5 10V6m5 14v-8" />
-                            </svg>
-                            Bar
-                        </span>
-                    </button>
+                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[auto_auto_1fr_auto] lg:items-center w-full">
+
+                    {{-- Date Range --}}
+                    <div class="flex items-center gap-2">
+                        <label
+                            class="text-[11px] font-medium text-stone-600 dark:text-stone-400 hidden md:block">Periode:</label>
+                        <input wire:model.live="dateFrom" type="date"
+                            class="focus:ring-sage-500 flex-1 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300" />
+                        <span class="text-[10px] text-stone-400">s/d</span>
+                        <input wire:model.live="dateTo" type="date"
+                            class="focus:ring-sage-500 flex-1 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300" />
+                    </div>
+
+                    {{-- Store Filter --}}
+                    <select wire:model.live="filterStore"
+                        class="focus:ring-sage-500 w-full rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300">
+                        <option value="">Semua Store</option>
+                        @foreach ($stores as $store)
+                            <option value="{{ $store->id }}">{{ $store->name }}</option>
+                        @endforeach
+                    </select>
+
+                    {{-- Spacer di desktop (kolom 3 kosong) --}}
+                    <div class="hidden lg:block"></div>
+
+                    {{-- Chart Type Switcher --}}
+                    <div
+                        class="flex items-center gap-1 overflow-x-auto rounded-lg border border-stone-200 bg-stone-50 p-0.5 dark:border-stone-700 dark:bg-stone-800">
+                        <button wire:click="setChartType('candlestick')" type="button"
+                            class="flex-1 cursor-pointer whitespace-nowrap rounded-md px-2 py-1 text-[10px] font-medium transition
+                            {{ $chartType === 'candlestick'
+                                ? 'bg-white text-sage-700 shadow-sm dark:bg-stone-700 dark:text-sage-400'
+                                : 'text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200' }}">
+                            <span class="flex items-center justify-center gap-1">
+                                <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M3 4v16M3 9h4m-4 6h4m-4-3h4m13-8v16m0-13h-4m4 6h-4m4-3h-4" />
+                                </svg>
+                                <span class="hidden sm:inline">Candle</span>
+                                <span class="sm:hidden">C</span>
+                            </span>
+                        </button>
+                        <button wire:click="setChartType('line')" type="button"
+                            class="flex-1 cursor-pointer whitespace-nowrap rounded-md px-2 py-1 text-[10px] font-medium transition
+            {{ $chartType === 'line'
+                ? 'bg-white text-sage-700 shadow-sm dark:bg-stone-700 dark:text-sage-400'
+                : 'text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200' }}">
+                            <span class="flex items-center justify-center gap-1">
+                                <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 17l6-6 4 4 8-8" />
+                                </svg>
+                                <span class="hidden sm:inline">Line</span>
+                                <span class="sm:hidden">L</span>
+                            </span>
+                        </button>
+                        <button wire:click="setChartType('bar')" type="button"
+                            class="flex-1 cursor-pointer whitespace-nowrap rounded-md px-2 py-1 text-[10px] font-medium transition
+            {{ $chartType === 'bar'
+                ? 'bg-white text-sage-700 shadow-sm dark:bg-stone-700 dark:text-sage-400'
+                : 'text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200' }}">
+                            <span class="flex items-center justify-center gap-1">
+                                <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M3 20h18M7 20V10m5 10V6m5 14v-8" />
+                                </svg>
+                                <span class="hidden sm:inline">Bar</span>
+                                <span class="sm:hidden">B</span>
+                            </span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="mb-3 flex flex-col md:flex-row flex-wrap items-start md:items-center md:justify-between justify-start gap-2">
+            <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+
                 {{-- Period Switcher --}}
                 <div
-                    class="flex flex-1 items-center gap-1 rounded-lg border border-stone-200 bg-stone-50 p-0.5 dark:border-stone-700 dark:bg-stone-800">
+                    class="flex items-center gap-1 overflow-x-auto rounded-lg border border-stone-200 bg-stone-50 p-0.5 dark:border-stone-700 dark:bg-stone-800 sm:flex-1 sm:overflow-visible">
                     @foreach (['daily' => 'Hari', 'weekly' => 'Minggu', 'monthly' => 'Bulan', 'yearly' => 'Tahun'] as $period => $label)
                         <button wire:click="setPeriod('{{ $period }}')" type="button"
                             wire:key="period-{{ $period }}"
-                            class="cursor-pointer flex-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition
-                                {{ $chartPeriod === $period
-                                    ? 'bg-white text-sage-700 shadow-sm dark:bg-stone-700 dark:text-sage-400'
-                                    : 'text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200' }}">
-                            Per {{ $label }}
+                            class="flex-1 cursor-pointer whitespace-nowrap rounded-md px-2 py-1.5 text-[10px] font-medium transition
+                    {{ $chartPeriod === $period
+                        ? 'bg-white text-sage-700 shadow-sm dark:bg-stone-700 dark:text-sage-400'
+                        : 'text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200' }}">
+                            <span class="hidden sm:inline">Per {{ $label }}</span>
+                            <span class="sm:hidden">{{ $label }}</span>
                         </button>
                     @endforeach
                 </div>
-                <select wire:model.live="chartStore"
-                    class="focus:ring-sage-500 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-[10px] text-stone-700 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300">
-                    <option value="">Semua Store</option>
-                    @foreach ($stores as $store)
-                        <option value="{{ $store->id }}">{{ $store->name }}</option>
-                    @endforeach
-                </select>
-            </div>
 
-            {{-- Chart Container --}}
-            <div x-ref="chart" wire:key="chart-{{ $chartType }}-{{ $chartPeriod }}" class="w-full"></div>
-        </div>
-
-        {{-- ── FILTER PERIODE ── --}}
-        <div class="rounded-xl border border-stone-200 bg-white px-3 py-3 dark:border-stone-800 dark:bg-stone-900">
-            <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-
-                <div class="flex items-center gap-2">
-                    <label class="text-[11px] font-medium text-stone-600 dark:text-stone-400">Periode:</label>
-                    <input wire:model.live="dateFrom" type="date"
-                        class="focus:ring-sage-500 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300" />
-                    <span class="text-stone-400">s/d</span>
-                    <input wire:model.live="dateTo" type="date"
-                        class="focus:ring-sage-500 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300" />
-                </div>
-
-                <select wire:model.live="filterStore"
-                    class="focus:ring-sage-500 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300">
-                    <option value="">Semua Store</option>
-                    @foreach ($stores as $store)
-                        <option value="{{ $store->id }}">{{ $store->name }}</option>
-                    @endforeach
-                </select>
-
-                <div class="ml-auto flex items-center gap-2">
-                    <div wire:loading class="text-sage-600 dark:text-sage-400 flex items-center gap-1 text-[11px]">
+                {{-- Export Button --}}
+                <button wire:click="export" wire:loading.attr="disabled" wire:target="export" type="button"
+                    class="bg-sage-600 hover:bg-sage-700 focus:ring-sage-500 dark:bg-sage-500 dark:hover:bg-sage-600 inline-flex w-full cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">
+                    <span wire:loading.remove wire:target="export" class="flex items-center gap-1.5">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        </svg>
+                        <span class="hidden sm:inline">{{ __('Export Excel') }}</span>
+                        <span class="sm:hidden">{{ __('Export') }}</span>
+                    </span>
+                    <span wire:loading wire:target="export" class="flex items-center gap-2">
                         <svg class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                 stroke-width="4" />
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                         </svg>
-                        {{ __('Menghitung…') }}
-                    </div>
-                </div>
+                        <span class="hidden sm:inline">{{ __('Menyiapkan…') }}</span>
+                    </span>
+                </button>
             </div>
+
+            {{-- Chart Container --}}
+            <div x-ref="chart" wire:key="chart-{{ $chartType }}-{{ $chartPeriod }}" class="w-full"></div>
         </div>
 
         {{-- ════════════════════════════════════════════════ --}}
@@ -646,211 +683,287 @@ new #[Title('Financial Analysis')] class extends Component {
     </div>
 </div>
 @script
-    <script>
-        Alpine.data('salesChart', ({
-            data,
-            type
-        }) => ({
-            chart: null,
-            data: data,
-            type: type,
-            _observer: null,
+<script>
+    Alpine.data('salesChart', ({ data, type }) => ({
+        chart: null,
+        data: data,
+        type: type,
+        _observer: null,
+        _resizeObserver: null,
+        _lastBreakpoint: null,
 
-            init() {
-                this.$nextTick(() => {
+        init() {
+            this.$nextTick(() => {
+                this._lastBreakpoint = this.detectBreakpoint();
+                this.render();
+            });
+
+            // Watch perubahan data
+            this.$watch('data', () => this.render());
+            this.$watch('type', () => this.render());
+
+            // Dark mode observer
+            this._observer = new MutationObserver(() => this.render());
+            this._observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['class'],
+            });
+
+            // ResizeObserver: re-render saat container berubah ukuran
+            this._resizeObserver = new ResizeObserver(() => {
+                const bp = this.detectBreakpoint();
+                // Hanya re-render kalau breakpoint berubah (mobile ↔ desktop)
+                if (bp !== this._lastBreakpoint) {
+                    this._lastBreakpoint = bp;
                     this.render();
-                });
-
-                // Watch perubahan data (kalau Livewire update tanpa ganti key)
-                this.$watch('data', () => this.render());
-
-                // Dark mode observer
-                this._observer = new MutationObserver(() => this.render());
-                this._observer.observe(document.documentElement, {
-                    attributes: true,
-                    attributeFilter: ['class'],
-                });
-            },
-
-            destroy() {
-                if (this.chart) {
-                    this.chart.destroy();
-                    this.chart = null;
+                } else if (this.chart) {
+                    // Kalau breakpoint sama, cukup update width
+                    this.chart.updateOptions({
+                        chart: { width: '100%' }
+                    });
                 }
-                if (this._observer) {
-                    this._observer.disconnect();
-                    this._observer = null;
-                }
-            },
+            });
+            this._resizeObserver.observe(this.$refs.chart);
+        },
 
-            render() {
-                if (this.chart) {
-                    this.chart.destroy();
-                    this.chart = null;
-                }
+        destroy() {
+            if (this.chart) {
+                this.chart.destroy();
+                this.chart = null;
+            }
+            if (this._observer) {
+                this._observer.disconnect();
+                this._observer = null;
+            }
+            if (this._resizeObserver) {
+                this._resizeObserver.disconnect();
+                this._resizeObserver = null;
+            }
+        },
 
-                const container = this.$refs.chart;
-                if (!container) return;
-                container.innerHTML = '';
+        /**
+         * Deteksi breakpoint berdasarkan lebar container chart.
+         * Return: 'mobile' | 'tablet' | 'desktop'
+         */
+        detectBreakpoint() {
+            const el = this.$refs.chart;
+            if (!el) return 'desktop';
+            const w = el.clientWidth || window.innerWidth;
+            if (w < 640) return 'mobile';
+            if (w < 1024) return 'tablet';
+            return 'desktop';
+        },
 
-                if (!this.data || this.data.length === 0) {
-                    container.innerHTML =
-                        '<div class="flex h-[320px] items-center justify-center text-xs text-stone-400">Tidak ada data pada periode ini</div>';
-                    return;
-                }
+        render() {
+            if (this.chart) {
+                this.chart.destroy();
+                this.chart = null;
+            }
 
-                this.chart = new ApexCharts(container, this.buildOptions(this.buildSeries()));
-                this.chart.render();
-            },
+            const container = this.$refs.chart;
+            if (!container) return;
+            container.innerHTML = '';
 
-            buildSeries() {
-                if (this.type === 'candlestick') {
-                    return [{
-                        name: 'Revenue',
-                        data: this.data.map(d => ({
-                            x: d.label,
-                            y: [d.o, d.h, d.l, d.c],
-                        })),
-                    }];
-                }
+            if (!this.data || this.data.length === 0) {
+                container.innerHTML =
+                    '<div class="flex h-[320px] items-center justify-center text-xs text-stone-400">Tidak ada data pada periode ini</div>';
+                return;
+            }
 
+            this.chart = new ApexCharts(container, this.buildOptions(this.buildSeries()));
+            this.chart.render();
+        },
+
+        buildSeries() {
+            if (this.type === 'candlestick') {
                 return [{
                     name: 'Revenue',
                     data: this.data.map(d => ({
                         x: d.label,
-                        y: d.revenue,
+                        y: [d.o, d.h, d.l, d.c],
                     })),
                 }];
-            },
+            }
 
-            buildOptions(series) {
-                const isCandle = this.type === 'candlestick';
-                const isBar = this.type === 'bar';
-                const isDark = document.documentElement.classList.contains('dark');
+            return [{
+                name: 'Revenue',
+                data: this.data.map(d => ({
+                    x: d.label,
+                    y: d.revenue,
+                })),
+            }];
+        },
 
-                return {
-                    series: series,
-                    chart: {
-                        type: this.type,
-                        height: 320,
-                        width: '100%',
-                        parentHeightOffset: 0, // ← hilangkan padding default
-                        redrawOnParentResize: true, // ← redraw saat parent resize
-                        redrawOnWindowResize: true,
-                        toolbar: {
-                            show: false
+        buildOptions(series) {
+            const isCandle = this.type === 'candlestick';
+            const isBar = this.type === 'bar';
+            const isDark = document.documentElement.classList.contains('dark');
+
+            // Deteksi breakpoint & konfigurasi adaptif
+            const bp = this.detectBreakpoint();
+            const isMobile = bp === 'mobile';
+            const isTablet = bp === 'tablet';
+            const isDesktop = bp === 'desktop';
+
+            // Tinggi chart adaptif
+            const chartHeight = isMobile ? 280 : (isTablet ? 320 : 360);
+
+            // Rotasi label X: 90° di mobile, 45° di tablet, 30° di desktop
+            const labelRotate = isMobile ? -90 : (isTablet ? -45 : -30);
+            const labelRotateAlways = isMobile; // paksa selalu rotate di mobile
+
+            // Ukuran font label
+            const labelFontSize = isMobile ? '9px' : '10px';
+
+            // Jumlah tick X: mobile lebih sedikit biar tidak tumpang tindih
+            const maxTicks = isMobile ? 6 : (isTablet ? 10 : 15);
+
+            // Padding grid
+            const gridPadding = isMobile ? {
+                left: 4,
+                right: 4,
+                bottom: 30
+            } : {
+                left: 8,
+                right: 8,
+                bottom: 10
+            };
+
+            return {
+                series: series,
+                chart: {
+                    type: this.type,
+                    height: chartHeight,
+                    width: '100%',
+                    parentHeightOffset: 0,
+                    redrawOnParentResize: true,
+                    redrawOnWindowResize: true,
+                    toolbar: {
+                        show: false
+                    },
+                    fontFamily: 'inherit',
+                    background: 'transparent',
+                    animations: {
+                        enabled: true,
+                        speed: 400
+                    },
+                },
+                theme: {
+                    mode: isDark ? 'dark' : 'light'
+                },
+                plotOptions: {
+                    candlestick: {
+                        colors: {
+                            upward: '#16a34a',
+                            downward: '#dc2626'
                         },
-                        fontFamily: 'inherit',
-                        background: 'transparent',
-                        animations: {
-                            enabled: true,
-                            speed: 400
+                        wick: {
+                            useFillColor: true
                         },
                     },
-                    theme: {
-                        mode: isDark ? 'dark' : 'light'
+                    bar: {
+                        columnWidth: isMobile ? '70%' : '60%',
+                        borderRadius: 3
                     },
-                    plotOptions: {
-                        candlestick: {
-                            colors: {
-                                upward: '#16a34a',
-                                downward: '#dc2626'
-                            },
-                            wick: {
-                                useFillColor: true
-                            },
+                },
+                stroke: {
+                    width: isBar ? 0 : (isCandle ? 1 : 2),
+                    curve: 'smooth',
+                },
+                colors: isCandle ? undefined : ['#84a98c'],
+                dataLabels: {
+                    enabled: false
+                },
+                markers: {
+                    size: isBar || isCandle ? 0 : (isMobile ? 2 : 4),
+                    colors: ['#84a98c'],
+                    strokeColors: isDark ? '#1c1917' : '#fff',
+                    strokeWidth: 2,
+                },
+                xaxis: {
+                    type: 'category',
+                    tickAmount: maxTicks, // ← batasi jumlah label
+                    labels: {
+                        style: {
+                            fontSize: labelFontSize,
+                            colors: isDark ? '#a8a29e' : '#78716c',
+                            fontWeight: 400,
                         },
-                        bar: {
-                            columnWidth: '60%',
-                            borderRadius: 3
+                        rotate: labelRotate,
+                        rotateAlways: labelRotateAlways,
+                        trim: true,
+                        hideOverlappingLabels: true, // ← sembunyikan label tumpang tindih
+                        maxHeight: isMobile ? 80 : 60, // ← ruang label yang dirotasi
+                        offsetY: 0,
+                    },
+                    axisBorder: {
+                        show: false
+                    },
+                    axisTicks: {
+                        show: false
+                    },
+                },
+                yaxis: {
+                    labels: {
+                        style: {
+                            fontSize: labelFontSize,
+                            colors: isDark ? '#a8a29e' : '#78716c'
+                        },
+                        formatter: (val) => {
+                            if (Math.abs(val) >= 1_000_000) return 'Rp ' + (val / 1_000_000).toFixed(1) + 'jt';
+                            if (Math.abs(val) >= 1_000) return 'Rp ' + (val / 1_000).toFixed(0) + 'rb';
+                            return 'Rp ' + val;
                         },
                     },
-                    stroke: {
-                        width: isBar ? 0 : (isCandle ? 1 : 2),
-                        curve: 'smooth',
-                    },
-                    colors: isCandle ? undefined : ['#84a98c'],
-                    dataLabels: {
-                        enabled: false
-                    },
-                    markers: {
-                        size: isBar || isCandle ? 0 : 4,
-                        colors: ['#84a98c'],
-                        strokeColors: isDark ? '#1c1917' : '#fff',
-                        strokeWidth: 2,
-                    },
+                },
+                grid: {
+                    borderColor: isDark ? '#292524' : '#e7e5e4',
+                    strokeDashArray: 4,
                     xaxis: {
-                        type: 'category',
-                        labels: {
-                            style: {
-                                fontSize: '10px',
-                                colors: isDark ? '#a8a29e' : '#78716c'
-                            },
-                            rotate: -45,
-                            rotateAlways: false,
-                            trim: true,
-                        },
-                        axisBorder: {
+                        lines: {
                             show: false
-                        },
-                        axisTicks: {
-                            show: false
-                        },
+                        }
                     },
                     yaxis: {
-                        labels: {
-                            style: {
-                                fontSize: '10px',
-                                colors: isDark ? '#a8a29e' : '#78716c'
-                            },
-                            formatter: (val) => {
-                                if (Math.abs(val) >= 1_000_000) return 'Rp ' + (val / 1_000_000).toFixed(
-                                    1) + 'jt';
-                                if (Math.abs(val) >= 1_000) return 'Rp ' + (val / 1_000).toFixed(0) + 'rb';
-                                return 'Rp ' + val;
-                            },
-                        },
+                        lines: {
+                            show: true
+                        }
                     },
-                    grid: {
-                        borderColor: isDark ? '#292524' : '#e7e5e4',
-                        strokeDashArray: 4,
-                        xaxis: {
-                            lines: {
-                                show: false
-                            }
-                        },
-                        yaxis: {
-                            lines: {
-                                show: true
-                            }
-                        },
-                        padding: {
-                            left: 8,
-                            right: 8
-                        },
+                    padding: gridPadding,
+                },
+                legend: {
+                    show: !isMobile, // sembunyikan legend di mobile biar hemat ruang
+                    fontSize: '10px',
+                },
+                tooltip: {
+                    theme: isDark ? 'dark' : 'light',
+                    style: {
+                        fontSize: isMobile ? '10px' : '11px',
                     },
-                    tooltip: {
-                        theme: isDark ? 'dark' : 'light',
-                        y: {
-                            formatter: (val, opts) => {
-                                if (isCandle) {
-                                    const point = opts.w.config.series[opts.seriesIndex].data[opts
-                                        .dataPointIndex];
-                                    const [o, h, l, c] = point.y;
-                                    const fmt = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
-                                    return [
-                                        `Open: ${fmt(o)}`,
-                                        `High: ${fmt(h)}`,
-                                        `Low: ${fmt(l)}`,
-                                        `Close: ${fmt(c)}`,
-                                    ].join(' | ');
+                    y: {
+                        formatter: (val, opts) => {
+                            if (isCandle) {
+                                const point = opts.w.config.series[opts.seriesIndex].data[opts
+                                    .dataPointIndex];
+                                const [o, h, l, c] = point.y;
+                                const fmt = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
+                                // Format multi-baris kalau di desktop, satu baris kalau mobile
+                                if (isMobile) {
+                                    return `O: ${fmt(o)} H: ${fmt(h)} L: ${fmt(l)} C: ${fmt(c)}`;
                                 }
-                                return 'Rp ' + Number(val).toLocaleString('id-ID');
-                            },
+                                return [
+                                    `Open: ${fmt(o)}`,
+                                    `High: ${fmt(h)}`,
+                                    `Low: ${fmt(l)}`,
+                                    `Close: ${fmt(c)}`,
+                                ].join(' | ');
+                            }
+                            return 'Rp ' + Number(val).toLocaleString('id-ID');
                         },
                     },
-                };
-            },
-        }));
-    </script>
+                },
+            };
+        },
+    }));
+</script>
 @endscript
