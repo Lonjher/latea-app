@@ -116,6 +116,7 @@ new #[Title('Manage Products')] class extends Component {
                             <th class="px-2.5 py-1.5">{{ __('Product') }}</th>
                             <th class="hidden px-2.5 py-1.5 sm:table-cell">{{ __('Code') }}</th>
                             <th class="hidden px-2.5 py-1.5 md:table-cell text-right">{{ __('Harga') }}</th>
+                            <th class="hidden px-2.5 py-1.5 md:table-cell text-right">{{ __('Diskon') }}</th>
                             <th class="hidden w-20 px-2.5 py-1.5 text-center sm:table-cell">{{ __('Active') }}</th>
                             <th class="w-20 px-2.5 py-1.5 text-right">{{ __('Aksi') }}</th>
                         </tr>
@@ -158,11 +159,18 @@ new #[Title('Manage Products')] class extends Component {
                                     <div class="font-mono text-stone-700 dark:text-stone-200">
                                         {{ $product->price }}
                                     </div>
+                                    <div class="font-mono text-[10px] text-green-600 dark:text-green-400">
+                                        HPP: {{ $product->initial_price }}
+                                    </div>
+                                </td>
+
+                                {{-- Kolom Diskon --}}
+                                <td class="hidden px-2.5 py-1.5 md:table-cell text-right dark:text-stone-400">
+                                    <div class="font-mono text-stone-700 dark:text-stone-200">
+                                        {{ $product->discount_price ?? 'N/A' }}
+                                    </div>
                                     @if ($product->discount_price && $product->minimal_discount)
-                                        <div class="font-mono text-[10px] text-green-600 dark:text-green-400">
-                                            {{ $product->discount_price }}
-                                            <span class="text-stone-400">(min. {{ $product->minimal_discount }}x)</span>
-                                        </div>
+                                        <span class="text-stone-400">(min. {{ $product->minimal_discount }}x)</span>
                                     @endif
                                 </td>
 

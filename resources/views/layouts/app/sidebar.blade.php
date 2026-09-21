@@ -1,12 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{
-    darkMode: localStorage.getItem('darkMode') ?
-        localStorage.getItem('darkMode') === 'true' : window.matchMedia('(prefers-color-scheme: dark)').matches
-}" x-init="$watch('darkMode', val => {
-    localStorage.setItem('darkMode', val);
-    document.documentElement.classList.toggle('dark', val);
-})"
-    :class="{ 'dark': darkMode }">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" :class="{ 'dark': darkMode }">
 
 <head>
     @include('partials.head')
@@ -196,7 +189,7 @@
                     @endcan
                     @can('isCashier')
                         {{-- Inventaris Koordinator --}}
-                        <a href="{{ route('koordinator.inventaris') }}" wire:navigate
+                        <a href="" wire:navigate
                             class="sidebar-item {{ request()->routeIs('koordinator.inventaris') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
                             <div class="flex items-center gap-2.5">
                                 {{-- Ikon Inventaris --}}
@@ -210,7 +203,7 @@
                             </div>
                         </a>
                         {{-- Peminjaman Koordinator --}}
-                        <a href="{{ route('koordinator.peminjaman') }}" wire:navigate
+                        <a href="" wire:navigate
                             class="sidebar-item {{ request()->routeIs('koordinator.peminjaman') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
                             <div class="flex items-center gap-2.5">
                                 {{-- Ikon Peminjamans --}}
@@ -236,10 +229,9 @@
                             </div>
                         </a>
                         {{-- Laporan Koordinator --}}
-                        <a href="{{ route('koordinator.laporan-inventaris') }}" wire:navigate
+                        <a href="" wire:navigate
                             class="sidebar-item {{ request()->routeIs('koordinator.laporan-inventaris') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
                             <div class="flex items-center gap-2.5">
-                                {{-- Ikon laporans --}}
                                 <svg class="{{ request()->routeIs('koordinator.laporan-inventaris') ? 'w-3.5 h-3.5' : '' }} h-3.5 w-3.5"
                                     viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                                     <path
