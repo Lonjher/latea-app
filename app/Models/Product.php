@@ -24,12 +24,35 @@ use Illuminate\Support\Carbon;
 #[Guarded(['id'])]
 class Product extends Model
 {
-    protected function casts(): array
+    // protected function casts(): array
+    // {
+    //     return [
+    //         'initial_price' => RupiahCast::class,
+    //         'discount_price' => RupiahCast::class,
+    //         'price' => RupiahCast::class,
+    //     ];
+    // }
+
+    public function stores()
     {
-        return [
-            'initial_price' => RupiahCast::class,
-            'discount_price' => RupiahCast::class,
-            'price' => RupiahCast::class,
-        ];
+        return $this->belongsToMany(Store::class, 'store_products')
+            ->withPivot(['price', 'is_available'])
+            ->withTimestamps();
+    }
+
+    public function saleItems()
+    {
+        return $this->hasMany(SaleItem::class);
+    }
+
+    public function effectivePriceFor(int $quantity): float
+    {
+        if ($this->discount_price
+            && $this->minimal_discount
+            && $quantity >= $this->minimal_discount) {
+            return (float) $this->discount_price;
+        }
+
+        return (float) $this->price;
     }
 }

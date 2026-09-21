@@ -112,9 +112,10 @@ new #[Title('Manage Stores')] class extends Component {
                             class="border-b border-stone-200 bg-stone-50 font-semibold uppercase tracking-wider text-stone-500 dark:border-stone-800 dark:bg-stone-800/50 dark:text-stone-400">
                             <th class="w-6 px-2.5 py-1.5 text-center">#</th>
                             <th class="px-2.5 py-1.5">{{ __('Store') }}</th>
-                            <th class="hidden px-2.5 py-1.5 sm:table-cell">{{ __('Code') }}</th>
-                            <th class="hidden px-2.5 py-1.5 md:table-cell">{{ __('Location') }}</th>
-                            <th class="hidden w-10 px-2.5 py-1.5 text-center sm:table-cell">{{ __('Active') }}</th>
+                            <th class="px-2.5 py-1.5">{{ __('Code') }}</th>
+                            <th class="px-2.5 py-1.5">{{ __('Location') }}</th>
+                            <th class="px-2.5 py-1.5">{{ __('Products') }}</th>
+                            <th class="w-10 px-2.5 py-1.5 text-center">{{ __('Active') }}</th>
                             <th class="w-20 px-2.5 py-1.5 text-right">{{ __('Aksi') }}</th>
                         </tr>
                     </thead>
@@ -141,16 +142,21 @@ new #[Title('Manage Stores')] class extends Component {
                                     </div>
                                 </td>
 
-                                <td class="px-2.5 py-1.5 font-mono text-stone-500 dark:text-stone-400">
+                                <td class="px-2.5 py-1.5 font-mono text-[9px] md:text-[10px] text-stone-500 dark:text-stone-400">
                                     {{ $store->code }}
                                 </td>
 
                                 <td
-                                    class="hidden px-2.5 py-1.5 font-mono text-stone-500 sm:table-cell dark:text-stone-400">
+                                    class="px-2.5 py-1.5 font-mono text-[9px] md:text-[10px] text-stone-500 dark:text-stone-400">
                                     {{ $store->location }}
                                 </td>
 
-                                <td class="hidden px-2.5 py-1.5 text-center sm:table-cell">
+                                <td
+                                    class="px-2.5 py-1.5 font-mono text-stone-500 dark:text-stone-400">
+                                    {{ $store->products->count() ?? 0 }}
+                                </td>
+
+                                <td class="px-2.5 py-1.5 text-center">
                                     @if ($store->is_active)
                                         <span
                                             class="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700 dark:bg-green-950/40 dark:text-green-400">
@@ -206,6 +212,15 @@ new #[Title('Manage Stores')] class extends Component {
                                                         </svg>
                                                         Edit
                                                     </button>
+                                                    <a href="{{ route('admin.stores.products', $store->id) }}"
+                                                        @click="open = false"
+                                                        class="text-sage-600 dark:text-sage-400 hover:bg-sage-50 dark:hover:bg-sage-950/30 flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs transition-colors">
+                                                        <svg class="text-sage-500 h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                                                        </svg>
+                                                        Kelola Produk
+                                                    </a>
 
                                                     <flux:separator />
 

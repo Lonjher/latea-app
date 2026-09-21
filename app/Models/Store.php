@@ -25,4 +25,16 @@ class Store extends Model
     {
         return $this->hasOne(User::class);
     }
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'store_products')
+            ->using(StoreProduct::class)
+            ->withPivot(['price', 'is_available']);
+    }
+
+    public function sales()
+    {
+        return $this->hasMany(Sale::class);
+    }
 }

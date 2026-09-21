@@ -1,5 +1,12 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" :class="{ 'dark': darkMode }">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{
+    darkMode: localStorage.getItem('darkMode') === null
+        ? window.matchMedia('(prefers-color-scheme: dark)').matches
+        : localStorage.getItem('darkMode') === 'true'
+}" x-init="$watch('darkMode', value => {
+    localStorage.setItem('darkMode', value);
+    document.documentElement.classList.toggle('dark', value);
+})" :class="{ 'dark': darkMode }">
 
 <head>
     @include('partials.head')
@@ -45,6 +52,14 @@
                     @can('isAdmin')
                         {{-- Label Grup Menu --}}
                         <div class="sidebar-group-label">{{ __('Administrator') }}</div>
+                        {{-- Products --}}
+                        <a href="{{ route('admin.products') }}" wire:navigate
+                            class="sidebar-item {{ request()->routeIs('admin.products') ? 'active' : '' }} flex items-center gap-2 text-[11px]">
+                            <svg class="w-4 h-4 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20 7h-.7c.229-.467.349-.98.351-1.5a3.5 3.5 0 0 0-3.5-3.5c-1.717 0-3.215 1.2-4.331 2.481C10.4 2.842 8.949 2 7.5 2A3.5 3.5 0 0 0 4 5.5c.003.52.123 1.033.351 1.5H4a2 2 0 0 0-2 2v2a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V9a2 2 0 0 0-2-2Zm-9.942 0H7.5a1.5 1.5 0 0 1 0-3c.9 0 2 .754 3.092 2.122-.219.337-.392.635-.534.878Zm6.1 0h-3.742c.933-1.368 2.371-3 3.739-3a1.5 1.5 0 0 1 0 3h.003ZM13 14h-2v8h2v-8Zm-4 0H4v6a2 2 0 0 0 2 2h3v-8Zm6 0v8h3a2 2 0 0 0 2-2v-6h-5Z"/>
+                            </svg>
+                            <span>{{ __('Products') }}</span>
+                        </a>
                         {{-- Stores --}}
                         <a href="{{ route('admin.stores') }}" wire:navigate
                             class="sidebar-item {{ request()->routeIs('admin.stores') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
@@ -56,14 +71,6 @@
 
                                 <span class="font-medium">{{ __('Stores') }}</span>
                             </div>
-                        </a>
-                        {{-- Products --}}
-                        <a href="{{ route('admin.products') }}" wire:navigate
-                            class="sidebar-item {{ request()->routeIs('admin.products') ? 'active' : '' }} flex items-center gap-2 text-[11px]">
-                            <svg class="w-4 h-4 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M20 7h-.7c.229-.467.349-.98.351-1.5a3.5 3.5 0 0 0-3.5-3.5c-1.717 0-3.215 1.2-4.331 2.481C10.4 2.842 8.949 2 7.5 2A3.5 3.5 0 0 0 4 5.5c.003.52.123 1.033.351 1.5H4a2 2 0 0 0-2 2v2a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V9a2 2 0 0 0-2-2Zm-9.942 0H7.5a1.5 1.5 0 0 1 0-3c.9 0 2 .754 3.092 2.122-.219.337-.392.635-.534.878Zm6.1 0h-3.742c.933-1.368 2.371-3 3.739-3a1.5 1.5 0 0 1 0 3h.003ZM13 14h-2v8h2v-8Zm-4 0H4v6a2 2 0 0 0 2 2h3v-8Zm6 0v8h3a2 2 0 0 0 2-2v-6h-5Z"/>
-                            </svg>
-                            <span>{{ __('Products') }}</span>
                         </a>
 
                         {{-- User Navigasi --}}
@@ -108,84 +115,46 @@
                             </div>
                         </div>
 
-                        {{-- <div x-data="{ openL: {{ request()->routeIs(['admin.laporan-inventaris', 'admin.laporan-peminjaman']) ? 'true' : 'false' }} }">
-                            <button @click="openL = !openL"
-                                class="sidebar-item flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
-                                <div class="flex items-center gap-2.5">
-                                    <svg class="h-3.5 w-3.5" viewBox="0 0 40 40" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <rect width="40" height="40" rx="8" fill="currentColor"
-                                            fill-opacity="0.4" />
-                                        <path fill-rule="evenodd" clip-rule="evenodd"
-                                            d="M16.7333 7.86667H23.2667C24.482 7.86667 25.5206 8.64758 25.9064 9.73335H28.4C28.8789 9.73335 29.3395 9.91742 29.6865 10.2475C30.0335 10.5776 30.2404 11.0284 30.2643 11.5067L30.2667 11.6V30.2667C30.2667 30.7456 30.0826 31.2062 29.7525 31.5532C29.4225 31.9002 28.9717 32.1071 28.4933 32.131L28.4 32.1333H11.6C11.1211 32.1333 10.6605 31.9493 10.3135 31.6192C9.96649 31.2891 9.75962 30.8383 9.73567 30.36L9.73334 30.2667V11.6C9.73334 11.1211 9.91741 10.6605 10.2475 10.3135C10.5775 9.9665 11.0284 9.75963 11.5067 9.73568L11.6 9.73335H14.0937C14.4794 8.64758 15.518 7.86667 16.7333 7.86667ZM15.8021 10.7289C15.8043 10.6966 15.8047 10.6642 15.8035 10.6317C15.8032 10.6226 15.8027 10.6135 15.8021 10.6045C15.8347 10.1219 16.2432 9.73334 16.7333 9.73334H23.2667C23.7777 9.73334 24.2 10.1557 24.2 10.6667C24.2 11.1777 23.7777 11.6 23.2667 11.6H16.7333C16.2432 11.6 15.8347 11.2115 15.8021 10.7289Z"
-                                            fill="white" />
-                                        <path
-                                            d="M23.8136 18.1332C24.178 17.7688 24.7689 17.7689 25.1333 18.1333V18.1333C25.4978 18.4977 25.4978 19.0886 25.1333 19.4531L19.7265 24.8598C19.5515 25.0348 19.3142 25.1331 19.0667 25.1331C18.8192 25.1331 18.5818 25.0348 18.4068 24.8598L15.3334 21.7864C14.9689 21.422 14.9689 20.8311 15.3334 20.4666V20.4666C15.6978 20.1022 16.2886 20.1021 16.6531 20.4665L19.0667 22.8793L23.8136 18.1332Z"
-                                            fill="#B5B5B5" />
-                                    </svg>
-                                    <span class="font-medium">{{ __('Laporan') }}</span>
-                                </div>
+                        {{-- Sales --}}
+                        <a href="{{ route('admin.sales') }}" wire:navigate
+                            class="sidebar-item {{ request()->routeIs('admin.sales') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
+                            <div class="flex items-center gap-2.5">
+                                {{-- Ikon Stores --}}
+                                <svg fill="#000000" width="800px" height="800px" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg"><path d="M23,2.42a1.37,1.37,0,0,1,2,0l10.77,10.4a1.3,1.3,0,0,1,0,1.94L25,25.16a1.37,1.37,0,0,1-2,0l-2-1.94a1.28,1.28,0,0,1,0-1.94L24.37,18a.9.9,0,0,0-.66-1.53H5.46A1.47,1.47,0,0,1,4,15.11V12.33A1.53,1.53,0,0,1,5.46,11H23.71a.89.89,0,0,0,.66-1.53L21,6.16a1.28,1.28,0,0,1,0-1.94Zm-5.8,24.42a1.38,1.38,0,0,0-2,0L4.44,37.24a1.28,1.28,0,0,0,0,1.94L15.2,49.58a1.38,1.38,0,0,0,2,0l2-1.94a1.3,1.3,0,0,0,0-1.94l-3.37-3.26a.89.89,0,0,1,.66-1.52h8.68A13.4,13.4,0,0,1,24.8,38a12.68,12.68,0,0,1,.27-2.63H16.45a.88.88,0,0,1-.66-1.53l3.37-3.26a1.3,1.3,0,0,0,0-1.94ZM28,38a9.6,9.6,0,1,1,9.6,9.6A9.6,9.6,0,0,1,28,38Zm15.62-2.24-6.46,6.45a1.15,1.15,0,0,1-.86.38,1.14,1.14,0,0,1-.86-.38l-3.12-3.12a.56.56,0,0,1,0-.86l.86-.86a.56.56,0,0,1,.86,0l2.26,2.26,5.54-5.54a.56.56,0,0,1,.86,0l.86.86A.55.55,0,0,1,43.62,35.76Z" fill-rule="evenodd"/></svg>
 
-                                <svg :class="openL ? 'rotate-180' : ''"
-                                    class="h-3.5 w-3.5 text-stone-400 transition-transform duration-200 dark:text-stone-500"
-                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-
-                            <div x-show="openL" x-collapse class="mt-0.5 flex flex-col space-y-0.5 pl-4 pr-1"
-                                style="display: none;">
-                                <a href="{{ route('admin.laporan-inventaris') }}" wire:navigate
-                                    class="sidebar-item {{ request()->routeIs('admin.laporan-inventaris') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
-                                    <div class="flex items-center gap-2.5">
-                                        <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 32 32" id="icon"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <defs>
-                                                <style>
-                                                    .cls-1 {
-                                                        fill: currentColor;
-                                                    }
-                                                </style>
-                                            </defs>
-                                            <title>inventory-management</title>
-                                            <rect x="19" y="24" width="4" height="4" />
-                                            <rect x="26" y="24" width="4" height="4" />
-                                            <rect x="19" y="17" width="4" height="4" />
-                                            <rect x="26" y="17" width="4" height="4" />
-                                            <path
-                                                d="M17,24H4V10H28v5h2V10a2.0023,2.0023,0,0,0-2-2H22V4a2.0023,2.0023,0,0,0-2-2H12a2.002,2.002,0,0,0-2,2V8H4a2.002,2.002,0,0,0-2,2V24a2.0023,2.0023,0,0,0,2,2H17ZM12,4h8V8H12Z" />
-                                            <rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;"
-                                                class="cls-1" />
-                                        </svg>
-
-                                        <span class="font-medium">{{ __('Inventaris') }}</span>
-                                    </div>
-                                </a>
-
-                                <a href="{{ route('admin.laporan-peminjaman') }}" wire:navigate
-                                    class="sidebar-item {{ request()->routeIs('admin.laporan-peminjaman') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
-                                    <div class="flex items-center gap-2.5">
-                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path
-                                                d="M18.18 8.03933L18.6435 7.57589C19.4113 6.80804 20.6563 6.80804 21.4241 7.57589C22.192 8.34374 22.192 9.58868 21.4241 10.3565L20.9607 10.82M18.18 8.03933C18.18 8.03933 18.238 9.02414 19.1069 9.89309C19.9759 10.762 20.9607 10.82 20.9607 10.82M18.18 8.03933L13.9194 12.2999C13.6308 12.5885 13.4865 12.7328 13.3624 12.8919C13.2161 13.0796 13.0906 13.2827 12.9882 13.4975C12.9014 13.6797 12.8368 13.8732 12.7078 14.2604L12.2946 15.5L12.1609 15.901M20.9607 10.82L16.7001 15.0806C16.4115 15.3692 16.2672 15.5135 16.1081 15.6376C15.9204 15.7839 15.7173 15.9094 15.5025 16.0118C15.3203 16.0986 15.1268 16.1632 14.7396 16.2922L13.5 16.7054L13.099 16.8391M13.099 16.8391L12.6979 16.9728C12.5074 17.0363 12.2973 16.9867 12.1553 16.8447C12.0133 16.7027 11.9637 16.4926 12.0272 16.3021L12.1609 15.901M13.099 16.8391L12.1609 15.901"
-                                                stroke="#1C274C" stroke-width="1.5" />
-                                            <path d="M8 13H10.5" stroke="#1C274C" stroke-width="1.5"
-                                                stroke-linecap="round" />
-                                            <path d="M8 9H14.5" stroke="#1C274C" stroke-width="1.5"
-                                                stroke-linecap="round" />
-                                            <path d="M8 17H9.5" stroke="#1C274C" stroke-width="1.5"
-                                                stroke-linecap="round" />
-                                            <path
-                                                d="M3 14V10C3 6.22876 3 4.34315 4.17157 3.17157C5.34315 2 7.22876 2 11 2H13C16.7712 2 18.6569 2 19.8284 3.17157M21 14C21 17.7712 21 19.6569 19.8284 20.8284M4.17157 20.8284C5.34315 22 7.22876 22 11 22H13C16.7712 22 18.6569 22 19.8284 20.8284M19.8284 20.8284C20.7715 19.8853 20.9554 18.4796 20.9913 16"
-                                                stroke="#1C274C" stroke-width="1.5" stroke-linecap="round" />
-                                        </svg>
-                                        <span class="font-medium">{{ __('Peminjaman') }}</span>
-                                    </div>
-                                </a>
+                                <span class="font-medium">{{ __('Sales') }}</span>
                             </div>
-                        </div> --}}
+                        </a>
+                        {{-- Margin --}}
+                        <a href="{{ route('admin.margin') }}" wire:navigate
+                            class="sidebar-item {{ request()->routeIs('admin.margin') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
+                            <div class="flex items-center gap-2.5">
+                                {{-- Ikon Margin --}}
+                                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-label="A profit margin bar" viewBox="-0.0 -17.0 285.0 285.0"><g transform="translate(0.000000,251.000000) scale(0.100000,-0.100000)">
+                                    <path d="M1955 2325 c-5 -2 -354 -6 -775 -9 -789 -5 -856 -8 -918 -47 -31 -19
+                                    -63 -72 -71 -117 -7 -45 -8 -1786 -1 -1822 15 -68 77 -126 150 -139 38 -7 658
+                                    -8 1580 -3 541 3 588 5 625 21 60 28 104 79 113 131 7 45 10 1574 3 1745 -5
+                                    136 -51 205 -154 232 -26 7 -537 14 -552 8z m565 -90 c19 -12 44 -38 55 -60
+                                    20 -39 20 -60 20 -930 0 -834 -1 -893 -18 -918 -36 -55 -53 -59 -270 -69 -111
+                                    -5 -596 -7 -1077 -6 -859 3 -876 3 -910 23 -74 43 -70 -12 -70 959 0 637 3
+                                    879 12 908 6 22 24 50 39 62 26 22 39 24 211 30 291 11 1251 23 1628 22 327
+                                    -1 347 -2 380 -21z M2095 2094 c-38 -8 -96 -19 -127 -25 -32 -7 -65 -17 -74
+                                    -24 -26 -19 -8 -51 41 -74 25 -12 45 -23 45 -25 0 -4 -157 -129 -209 -167 -90
+                                    -65 -182 -126 -285 -188 -120 -74 -462 -247 -591 -300 -90 -37 -261 -105 -287
+                                    -114 -28 -10 -40 -43 -22 -61 21 -21 29 -20 126 10 437 137 991 433 1298 692
+                                    l65 55 19 -46 c22 -52 49 -68 74 -43 30 30 64 285 42 311 -15 18 -23 17 -115
+                                    -1z M1922 1604 l-22 -15 0 -545 0 -544 -90 0 -90 0 0 383 0 384 -23 21 c-22
+                                    21 -33 22 -173 22 -100 0 -157 -4 -174 -13 l-25 -13 -5 -394 -5 -395 -90 0
+                                    -90 0 -3 255 c-2 225 -4 256 -19 268 -18 13 -287 16 -333 3 l-25 -7 -5 -259
+                                    -5 -260 -141 -3 c-110 -2 -145 -6 -154 -17 -10 -12 -10 -18 0 -30 11 -13 135
+                                    -15 1002 -15 906 0 989 1 995 16 12 33 -11 49 -78 54 l-64 5 -2 544 c-2 390
+                                    -6 547 -14 557 -18 22 -336 20 -367 -2z"></path></g>
+                                </svg>
+
+
+                                <span class="font-medium">{{ __('Margin Analysis') }}</span>
+                            </div>
+                        </a>
                     @endcan
                     @can('isCashier')
                         {{-- Inventaris Koordinator --}}
@@ -306,9 +275,9 @@
                 <div class="header-actions">
 
                     {{-- Dark mode toggle --}}
-                    <button x-data variant="segmented" x-model="$flux.appearance"
+                    <button
                         class="cursor-pointer rounded-lg p-2 text-stone-500 transition-colors hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800"
-                        :aria-label="darkMode ? 'Dark Mode' : 'Light Mode'" @click="darkMode = !darkMode">
+                        :aria-label="darkMode ? 'Light Mode' : 'Dark Mode'" @click="darkMode = !darkMode">
                         <svg x-show="!darkMode" class="h-5 w-5" fill="none" stroke="currentColor"
                             viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
