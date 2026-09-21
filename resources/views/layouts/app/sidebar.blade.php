@@ -115,84 +115,18 @@
                             </div>
                         </div>
 
-                        {{-- <div x-data="{ openL: {{ request()->routeIs(['admin.laporan-inventaris', 'admin.laporan-peminjaman']) ? 'true' : 'false' }} }">
-                            <button @click="openL = !openL"
-                                class="sidebar-item flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
-                                <div class="flex items-center gap-2.5">
-                                    <svg class="h-3.5 w-3.5" viewBox="0 0 40 40" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <rect width="40" height="40" rx="8" fill="currentColor"
-                                            fill-opacity="0.4" />
-                                        <path fill-rule="evenodd" clip-rule="evenodd"
-                                            d="M16.7333 7.86667H23.2667C24.482 7.86667 25.5206 8.64758 25.9064 9.73335H28.4C28.8789 9.73335 29.3395 9.91742 29.6865 10.2475C30.0335 10.5776 30.2404 11.0284 30.2643 11.5067L30.2667 11.6V30.2667C30.2667 30.7456 30.0826 31.2062 29.7525 31.5532C29.4225 31.9002 28.9717 32.1071 28.4933 32.131L28.4 32.1333H11.6C11.1211 32.1333 10.6605 31.9493 10.3135 31.6192C9.96649 31.2891 9.75962 30.8383 9.73567 30.36L9.73334 30.2667V11.6C9.73334 11.1211 9.91741 10.6605 10.2475 10.3135C10.5775 9.9665 11.0284 9.75963 11.5067 9.73568L11.6 9.73335H14.0937C14.4794 8.64758 15.518 7.86667 16.7333 7.86667ZM15.8021 10.7289C15.8043 10.6966 15.8047 10.6642 15.8035 10.6317C15.8032 10.6226 15.8027 10.6135 15.8021 10.6045C15.8347 10.1219 16.2432 9.73334 16.7333 9.73334H23.2667C23.7777 9.73334 24.2 10.1557 24.2 10.6667C24.2 11.1777 23.7777 11.6 23.2667 11.6H16.7333C16.2432 11.6 15.8347 11.2115 15.8021 10.7289Z"
-                                            fill="white" />
-                                        <path
-                                            d="M23.8136 18.1332C24.178 17.7688 24.7689 17.7689 25.1333 18.1333V18.1333C25.4978 18.4977 25.4978 19.0886 25.1333 19.4531L19.7265 24.8598C19.5515 25.0348 19.3142 25.1331 19.0667 25.1331C18.8192 25.1331 18.5818 25.0348 18.4068 24.8598L15.3334 21.7864C14.9689 21.422 14.9689 20.8311 15.3334 20.4666V20.4666C15.6978 20.1022 16.2886 20.1021 16.6531 20.4665L19.0667 22.8793L23.8136 18.1332Z"
-                                            fill="#B5B5B5" />
-                                    </svg>
-                                    <span class="font-medium">{{ __('Laporan') }}</span>
-                                </div>
-
-                                <svg :class="openL ? 'rotate-180' : ''"
-                                    class="h-3.5 w-3.5 text-stone-400 transition-transform duration-200 dark:text-stone-500"
-                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7" />
+                        {{-- Sales --}}
+                        <a href="{{ route('admin.sales') }}" wire:navigate
+                            class="sidebar-item {{ request()->routeIs('admin.sales') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
+                            <div class="flex items-center gap-2.5">
+                                {{-- Ikon Stores --}}
+                                <svg data-slot="icon" fill="none" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z"></path>
                                 </svg>
-                            </button>
 
-                            <div x-show="openL" x-collapse class="mt-0.5 flex flex-col space-y-0.5 pl-4 pr-1"
-                                style="display: none;">
-                                <a href="{{ route('admin.laporan-inventaris') }}" wire:navigate
-                                    class="sidebar-item {{ request()->routeIs('admin.laporan-inventaris') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
-                                    <div class="flex items-center gap-2.5">
-                                        <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 32 32" id="icon"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <defs>
-                                                <style>
-                                                    .cls-1 {
-                                                        fill: currentColor;
-                                                    }
-                                                </style>
-                                            </defs>
-                                            <title>inventory-management</title>
-                                            <rect x="19" y="24" width="4" height="4" />
-                                            <rect x="26" y="24" width="4" height="4" />
-                                            <rect x="19" y="17" width="4" height="4" />
-                                            <rect x="26" y="17" width="4" height="4" />
-                                            <path
-                                                d="M17,24H4V10H28v5h2V10a2.0023,2.0023,0,0,0-2-2H22V4a2.0023,2.0023,0,0,0-2-2H12a2.002,2.002,0,0,0-2,2V8H4a2.002,2.002,0,0,0-2,2V24a2.0023,2.0023,0,0,0,2,2H17ZM12,4h8V8H12Z" />
-                                            <rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;"
-                                                class="cls-1" />
-                                        </svg>
-
-                                        <span class="font-medium">{{ __('Inventaris') }}</span>
-                                    </div>
-                                </a>
-
-                                <a href="{{ route('admin.laporan-peminjaman') }}" wire:navigate
-                                    class="sidebar-item {{ request()->routeIs('admin.laporan-peminjaman') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
-                                    <div class="flex items-center gap-2.5">
-                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path
-                                                d="M18.18 8.03933L18.6435 7.57589C19.4113 6.80804 20.6563 6.80804 21.4241 7.57589C22.192 8.34374 22.192 9.58868 21.4241 10.3565L20.9607 10.82M18.18 8.03933C18.18 8.03933 18.238 9.02414 19.1069 9.89309C19.9759 10.762 20.9607 10.82 20.9607 10.82M18.18 8.03933L13.9194 12.2999C13.6308 12.5885 13.4865 12.7328 13.3624 12.8919C13.2161 13.0796 13.0906 13.2827 12.9882 13.4975C12.9014 13.6797 12.8368 13.8732 12.7078 14.2604L12.2946 15.5L12.1609 15.901M20.9607 10.82L16.7001 15.0806C16.4115 15.3692 16.2672 15.5135 16.1081 15.6376C15.9204 15.7839 15.7173 15.9094 15.5025 16.0118C15.3203 16.0986 15.1268 16.1632 14.7396 16.2922L13.5 16.7054L13.099 16.8391M13.099 16.8391L12.6979 16.9728C12.5074 17.0363 12.2973 16.9867 12.1553 16.8447C12.0133 16.7027 11.9637 16.4926 12.0272 16.3021L12.1609 15.901M13.099 16.8391L12.1609 15.901"
-                                                stroke="#1C274C" stroke-width="1.5" />
-                                            <path d="M8 13H10.5" stroke="#1C274C" stroke-width="1.5"
-                                                stroke-linecap="round" />
-                                            <path d="M8 9H14.5" stroke="#1C274C" stroke-width="1.5"
-                                                stroke-linecap="round" />
-                                            <path d="M8 17H9.5" stroke="#1C274C" stroke-width="1.5"
-                                                stroke-linecap="round" />
-                                            <path
-                                                d="M3 14V10C3 6.22876 3 4.34315 4.17157 3.17157C5.34315 2 7.22876 2 11 2H13C16.7712 2 18.6569 2 19.8284 3.17157M21 14C21 17.7712 21 19.6569 19.8284 20.8284M4.17157 20.8284C5.34315 22 7.22876 22 11 22H13C16.7712 22 18.6569 22 19.8284 20.8284M19.8284 20.8284C20.7715 19.8853 20.9554 18.4796 20.9913 16"
-                                                stroke="#1C274C" stroke-width="1.5" stroke-linecap="round" />
-                                        </svg>
-                                        <span class="font-medium">{{ __('Peminjaman') }}</span>
-                                    </div>
-                                </a>
+                                <span class="font-medium">{{ __('Sales') }}</span>
                             </div>
-                        </div> --}}
+                        </a>
                     @endcan
                     @can('isCashier')
                         {{-- Inventaris Koordinator --}}
