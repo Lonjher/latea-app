@@ -32,4 +32,11 @@ class Product extends Model
             'price' => RupiahCast::class,
         ];
     }
+
+    public function stores()
+    {
+        return $this->belongsToMany(Store::class, 'store_products')
+            ->withPivot(['price', 'is_available'])
+            ->withTimestamps();
+    }
 }

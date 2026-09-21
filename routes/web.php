@@ -12,6 +12,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('admin/manage-stores', 'admin.manage-stores')->name('admin.stores');
     Route::livewire('admin/manage-products', 'admin.manage-products')->name('admin.products');
     Route::livewire('admin/manage-cashiers', 'admin.manage-cashiers')->name('admin.cashiers');
+
+    Route::livewire('admin/stores/{store}/products', 'admin.manage-store-products')->name('admin.stores.products');
 });
 
 require __DIR__.'/settings.php';

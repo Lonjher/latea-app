@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('store_products', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('store_id')->constrained();
-            $table->foreignId('product_id')->constrained();
-            $table->decimal('price', 15, 2);
+            $table->foreignId('store_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->decimal('price', 15, 2)->nullable();
             $table->boolean('is_available');
             $table->timestamps();
         });
