@@ -1,5 +1,12 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" :class="{ 'dark': darkMode }">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{
+    darkMode: localStorage.getItem('darkMode') === null
+        ? window.matchMedia('(prefers-color-scheme: dark)').matches
+        : localStorage.getItem('darkMode') === 'true'
+}" x-init="$watch('darkMode', value => {
+    localStorage.setItem('darkMode', value);
+    document.documentElement.classList.toggle('dark', value);
+})" :class="{ 'dark': darkMode }">
 
 <head>
     @include('partials.head')
@@ -45,6 +52,14 @@
                     @can('isAdmin')
                         {{-- Label Grup Menu --}}
                         <div class="sidebar-group-label">{{ __('Administrator') }}</div>
+                        {{-- Products --}}
+                        <a href="{{ route('admin.products') }}" wire:navigate
+                            class="sidebar-item {{ request()->routeIs('admin.products') ? 'active' : '' }} flex items-center gap-2 text-[11px]">
+                            <svg class="w-4 h-4 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20 7h-.7c.229-.467.349-.98.351-1.5a3.5 3.5 0 0 0-3.5-3.5c-1.717 0-3.215 1.2-4.331 2.481C10.4 2.842 8.949 2 7.5 2A3.5 3.5 0 0 0 4 5.5c.003.52.123 1.033.351 1.5H4a2 2 0 0 0-2 2v2a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V9a2 2 0 0 0-2-2Zm-9.942 0H7.5a1.5 1.5 0 0 1 0-3c.9 0 2 .754 3.092 2.122-.219.337-.392.635-.534.878Zm6.1 0h-3.742c.933-1.368 2.371-3 3.739-3a1.5 1.5 0 0 1 0 3h.003ZM13 14h-2v8h2v-8Zm-4 0H4v6a2 2 0 0 0 2 2h3v-8Zm6 0v8h3a2 2 0 0 0 2-2v-6h-5Z"/>
+                            </svg>
+                            <span>{{ __('Products') }}</span>
+                        </a>
                         {{-- Stores --}}
                         <a href="{{ route('admin.stores') }}" wire:navigate
                             class="sidebar-item {{ request()->routeIs('admin.stores') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
@@ -56,14 +71,6 @@
 
                                 <span class="font-medium">{{ __('Stores') }}</span>
                             </div>
-                        </a>
-                        {{-- Products --}}
-                        <a href="{{ route('admin.products') }}" wire:navigate
-                            class="sidebar-item {{ request()->routeIs('admin.products') ? 'active' : '' }} flex items-center gap-2 text-[11px]">
-                            <svg class="w-4 h-4 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M20 7h-.7c.229-.467.349-.98.351-1.5a3.5 3.5 0 0 0-3.5-3.5c-1.717 0-3.215 1.2-4.331 2.481C10.4 2.842 8.949 2 7.5 2A3.5 3.5 0 0 0 4 5.5c.003.52.123 1.033.351 1.5H4a2 2 0 0 0-2 2v2a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V9a2 2 0 0 0-2-2Zm-9.942 0H7.5a1.5 1.5 0 0 1 0-3c.9 0 2 .754 3.092 2.122-.219.337-.392.635-.534.878Zm6.1 0h-3.742c.933-1.368 2.371-3 3.739-3a1.5 1.5 0 0 1 0 3h.003ZM13 14h-2v8h2v-8Zm-4 0H4v6a2 2 0 0 0 2 2h3v-8Zm6 0v8h3a2 2 0 0 0 2-2v-6h-5Z"/>
-                            </svg>
-                            <span>{{ __('Products') }}</span>
                         </a>
 
                         {{-- User Navigasi --}}
@@ -306,9 +313,9 @@
                 <div class="header-actions">
 
                     {{-- Dark mode toggle --}}
-                    <button x-data variant="segmented" x-model="$flux.appearance"
+                    <button
                         class="cursor-pointer rounded-lg p-2 text-stone-500 transition-colors hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800"
-                        :aria-label="darkMode ? 'Dark Mode' : 'Light Mode'" @click="darkMode = !darkMode">
+                        :aria-label="darkMode ? 'Light Mode' : 'Dark Mode'" @click="darkMode = !darkMode">
                         <svg x-show="!darkMode" class="h-5 w-5" fill="none" stroke="currentColor"
                             viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
