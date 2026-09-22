@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FinancialAnalysisExport;
+use App\Models\OperationalCost;
 
 new #[Title('Financial Analysis')] class extends Component {
     public $dateFrom;
@@ -156,20 +157,23 @@ new #[Title('Financial Analysis')] class extends Component {
         $from = Carbon::parse($this->dateFrom)->startOfDay();
         $to = Carbon::parse($this->dateTo)->endOfDay();
 
+        // Mengambil keseluruhan data transaksi
         $saleQuery = Sale::query()
             ->where('status', 'completed')
             ->whereBetween('sale_date', [$from, $to])
             ->when($this->filterStore !== '', fn($q) => $q->where('store_id', $this->filterStore));
 
-        // Chart data — pakai chartStore kalau ada
+        // Chart data
         $chartData = $this->buildChartData($from, $to);
 
-        // ... semua metrics yang sudah ada, pakai $saleQuery ...
+        // ═══════════════════════════════════════════
+        // Metrics
+        // ═══════════════════════════════════════════
+        $totalRevenue = (clone $saleQuery)->sum('total'); // Menghitung semua hasil total transaksi
+        $transactionCount = (clone $saleQuery)->count(); // menghitung jumlah transaksi
 
-        $totalRevenue = (clone $saleQuery)->sum('total');
-        $transactionCount = (clone $saleQuery)->count();
-
-        // HPP
+        // HPP (COGS)
+        // Menghitung total HPP dari hasil = hpp * jumlah quantitas dalam setiap transaksi
         $totalCogs = (float) DB::table('sale_items')
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('products', 'products.id', '=', 'sale_items.product_id')
@@ -178,6 +182,7 @@ new #[Title('Financial Analysis')] class extends Component {
             ->when($this->filterStore !== '', fn($q) => $q->where('sales.store_id', $this->filterStore))
             ->sum(DB::raw('products.initial_price * sale_items.quantity'));
 
+        // Menghitung jumlah quantitas dalam setiap transaksi
         $totalItemsSold = (int) DB::table('sale_items')
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sales.status', 'completed')
@@ -185,11 +190,21 @@ new #[Title('Financial Analysis')] class extends Component {
             ->when($this->filterStore !== '', fn($q) => $q->where('sales.store_id', $this->filterStore))
             ->sum('sale_items.quantity');
 
+        // Hasil Transaksi - Total HPP = Laba Kotor (grossProfit)
         $grossProfit = $totalRevenue - $totalCogs;
+        // Margin Laba Kotor
         $grossMarginPct = $totalRevenue > 0 ? ($grossProfit / $totalRevenue) * 100 : 0;
-        $operationalCost = $totalRevenue * 0.1;
+
+        // Perhitungan Pembiayaan
+        $operationalCost = (float) OperationalCost::query()
+            ->whereBetween('created_at', [$from, $to])
+            ->when($this->filterStore !== '', fn($q) => $q->where('store_id', $this->filterStore))
+            ->sum('cost');
+
         $netProfit = $grossProfit - $operationalCost;
         $netMarginPct = $totalRevenue > 0 ? ($netProfit / $totalRevenue) * 100 : 0;
+
+        // Pricing & BEP
         $markupPct = $totalCogs > 0 ? (($totalRevenue - $totalCogs) / $totalCogs) * 100 : 0;
 
         $avgSellingPrice = $totalItemsSold > 0 ? $totalRevenue / $totalItemsSold : 0;
@@ -198,6 +213,7 @@ new #[Title('Financial Analysis')] class extends Component {
         $bepUnits = $contributionMarginPerUnit > 0 ? ceil($operationalCost / $contributionMarginPerUnit) : 0;
         $bepRevenue = $bepUnits * $avgSellingPrice;
 
+        // Top products
         $topProducts = DB::table('sale_items')
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('products', 'products.id', '=', 'sale_items.product_id')
@@ -216,7 +232,6 @@ new #[Title('Financial Analysis')] class extends Component {
             )
             ->groupBy('sale_items.product_id', 'sale_items.product_name')
             ->orderByDesc('gross_profit')
-            ->take(5)
             ->get()
             ->map(function ($row) {
                 $row->margin_pct = $row->total_revenue > 0 ? ($row->gross_profit / $row->total_revenue) * 100 : 0;
@@ -261,7 +276,8 @@ new #[Title('Financial Analysis')] class extends Component {
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[auto_auto_1fr_auto] lg:items-center w-full">
+                <div
+                    class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[auto_auto_1fr_auto] lg:items-center w-full">
 
                     {{-- Date Range --}}
                     <div class="flex items-center gap-2">
@@ -585,20 +601,31 @@ new #[Title('Financial Analysis')] class extends Component {
                     </svg>
                 </div>
                 <div>
-                    <h2 class="text-sm font-semibold text-stone-800 dark:text-stone-100">Top 5 Produk — Kontribusi Laba
+                    {{-- Update judul --}}
+                    <h2 class="text-sm font-semibold text-stone-800 dark:text-stone-100">
+                        {{ __('Kontribusi Laba per Produk') }}
                     </h2>
                     <p class="text-[10px] text-stone-500 dark:text-stone-400">
-                        Untuk <span class="font-semibold">Cost Estimator</span> — prioritaskan produk dengan margin
+                        Untuk <span class="font-semibold">Cost Estimator</span> — diurutkan berdasarkan laba kotor
                         tertinggi
                     </p>
                 </div>
             </div>
 
-            <div class="overflow-x-auto rounded-lg border border-stone-200 dark:border-stone-700">
+            {{-- Tambahkan info count --}}
+            <div class="mb-2 flex items-center justify-between text-[10px] text-stone-500 dark:text-stone-400">
+                <span class="font-mono uppercase tracking-wider">
+                    {{ $topProducts->count() }} {{ __('produk') }}
+                </span>
+            </div>
+
+            {{-- Batasi tinggi tabel + scroll agar tidak kepanjangan --}}
+            <div class="max-h-[600px] overflow-auto rounded-lg border border-stone-200 dark:border-stone-700">
                 <table class="w-full text-left text-[11px]">
-                    <thead>
+                    <thead class="sticky top-0 z-10">
                         <tr
                             class="border-b border-stone-200 bg-stone-50 font-semibold uppercase tracking-wider text-stone-500 dark:border-stone-700 dark:bg-stone-800/50 dark:text-stone-400">
+                            <th class="w-8 px-3 py-1.5 text-center">#</th>
                             <th class="px-3 py-1.5">{{ __('Produk') }}</th>
                             <th class="px-3 py-1.5 text-right">{{ __('Qty') }}</th>
                             <th class="px-3 py-1.5 text-right">{{ __('Revenue') }}</th>
@@ -610,6 +637,10 @@ new #[Title('Financial Analysis')] class extends Component {
                     <tbody class="divide-y divide-stone-100 dark:divide-stone-800/60">
                         @forelse ($topProducts as $product)
                             <tr class="transition-colors hover:bg-stone-50 dark:hover:bg-stone-800/30">
+                                {{-- Nomor urut --}}
+                                <td class="px-3 py-1.5 text-center font-mono text-stone-400 dark:text-stone-500">
+                                    {{ $loop->iteration }}
+                                </td>
                                 <td class="px-3 py-1.5 font-medium text-stone-800 dark:text-stone-200">
                                     {{ $product->product_name }}
                                 </td>
@@ -635,12 +666,51 @@ new #[Title('Financial Analysis')] class extends Component {
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-3 py-6 text-center text-[11px] text-stone-400">
+                                <td colspan="7" class="px-3 py-6 text-center text-[11px] text-stone-400">
                                     {{ __('Tidak ada data produk pada periode ini') }}
                                 </td>
                             </tr>
                         @endforelse
                     </tbody>
+
+                    {{-- TFOOT — Total keseluruhan (semua produk) --}}
+                    @if ($topProducts->isNotEmpty())
+                        @php
+                            $totalQty       = $topProducts->sum('total_qty');
+                            $totalRevenue   = $topProducts->sum('total_revenue');
+                            $totalCogs      = $topProducts->sum('total_cogs');
+                            $totalProfit    = $topProducts->sum('gross_profit');
+                            $totalMarginPct = $totalRevenue > 0 ? ($totalProfit / $totalRevenue) * 100 : 0;
+                        @endphp
+
+                        <tfoot class="sticky bottom-0 z-10">
+                            <tr
+                                class="border-t-2 border-stone-300 bg-stone-100 font-semibold dark:border-stone-600 dark:bg-stone-800">
+                                {{-- ⭐ colspan 2: gabung kolom # dan Produk --}}
+                                <td colspan="2" class="px-3 py-2 text-stone-800 dark:text-stone-100">
+                                    {{ __('TOTAL') }}
+                                </td>
+                                <td class="px-3 py-2 text-right font-mono text-stone-800 dark:text-stone-100">
+                                    {{ number_format($totalQty, 0, ',', '.') }}
+                                </td>
+                                <td class="px-3 py-2 text-right font-mono text-stone-800 dark:text-stone-100">
+                                    Rp {{ number_format($totalRevenue, 0, ',', '.') }}
+                                </td>
+                                <td class="px-3 py-2 text-right font-mono text-amber-700 dark:text-amber-400">
+                                    Rp {{ number_format($totalCogs, 0, ',', '.') }}
+                                </td>
+                                <td class="px-3 py-2 text-right font-mono text-green-700 dark:text-green-400">
+                                    Rp {{ number_format($totalProfit, 0, ',', '.') }}
+                                </td>
+                                <td class="px-3 py-2 text-right">
+                                    <span
+                                        class="inline-flex items-center rounded-full bg-sage-100 px-2 py-0.5 font-mono text-[10px] font-bold text-sage-800 dark:bg-sage-900/60 dark:text-sage-300">
+                                        {{ number_format($totalMarginPct, 1) }}%
+                                    </span>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    @endif
                 </table>
             </div>
         </div>
@@ -683,287 +753,293 @@ new #[Title('Financial Analysis')] class extends Component {
     </div>
 </div>
 @script
-<script>
-    Alpine.data('salesChart', ({ data, type }) => ({
-        chart: null,
-        data: data,
-        type: type,
-        _observer: null,
-        _resizeObserver: null,
-        _lastBreakpoint: null,
+    <script>
+        Alpine.data('salesChart', ({
+            data,
+            type
+        }) => ({
+            chart: null,
+            data: data,
+            type: type,
+            _observer: null,
+            _resizeObserver: null,
+            _lastBreakpoint: null,
 
-        init() {
-            this.$nextTick(() => {
-                this._lastBreakpoint = this.detectBreakpoint();
-                this.render();
-            });
-
-            // Watch perubahan data
-            this.$watch('data', () => this.render());
-            this.$watch('type', () => this.render());
-
-            // Dark mode observer
-            this._observer = new MutationObserver(() => this.render());
-            this._observer.observe(document.documentElement, {
-                attributes: true,
-                attributeFilter: ['class'],
-            });
-
-            // ResizeObserver: re-render saat container berubah ukuran
-            this._resizeObserver = new ResizeObserver(() => {
-                const bp = this.detectBreakpoint();
-                // Hanya re-render kalau breakpoint berubah (mobile ↔ desktop)
-                if (bp !== this._lastBreakpoint) {
-                    this._lastBreakpoint = bp;
+            init() {
+                this.$nextTick(() => {
+                    this._lastBreakpoint = this.detectBreakpoint();
                     this.render();
-                } else if (this.chart) {
-                    // Kalau breakpoint sama, cukup update width
-                    this.chart.updateOptions({
-                        chart: { width: '100%' }
-                    });
+                });
+
+                // Watch perubahan data
+                this.$watch('data', () => this.render());
+                this.$watch('type', () => this.render());
+
+                // Dark mode observer
+                this._observer = new MutationObserver(() => this.render());
+                this._observer.observe(document.documentElement, {
+                    attributes: true,
+                    attributeFilter: ['class'],
+                });
+
+                // ResizeObserver: re-render saat container berubah ukuran
+                this._resizeObserver = new ResizeObserver(() => {
+                    const bp = this.detectBreakpoint();
+                    // Hanya re-render kalau breakpoint berubah (mobile ↔ desktop)
+                    if (bp !== this._lastBreakpoint) {
+                        this._lastBreakpoint = bp;
+                        this.render();
+                    } else if (this.chart) {
+                        // Kalau breakpoint sama, cukup update width
+                        this.chart.updateOptions({
+                            chart: {
+                                width: '100%'
+                            }
+                        });
+                    }
+                });
+                this._resizeObserver.observe(this.$refs.chart);
+            },
+
+            destroy() {
+                if (this.chart) {
+                    this.chart.destroy();
+                    this.chart = null;
                 }
-            });
-            this._resizeObserver.observe(this.$refs.chart);
-        },
+                if (this._observer) {
+                    this._observer.disconnect();
+                    this._observer = null;
+                }
+                if (this._resizeObserver) {
+                    this._resizeObserver.disconnect();
+                    this._resizeObserver = null;
+                }
+            },
 
-        destroy() {
-            if (this.chart) {
-                this.chart.destroy();
-                this.chart = null;
-            }
-            if (this._observer) {
-                this._observer.disconnect();
-                this._observer = null;
-            }
-            if (this._resizeObserver) {
-                this._resizeObserver.disconnect();
-                this._resizeObserver = null;
-            }
-        },
+            /**
+             * Deteksi breakpoint berdasarkan lebar container chart.
+             * Return: 'mobile' | 'tablet' | 'desktop'
+             */
+            detectBreakpoint() {
+                const el = this.$refs.chart;
+                if (!el) return 'desktop';
+                const w = el.clientWidth || window.innerWidth;
+                if (w < 640) return 'mobile';
+                if (w < 1024) return 'tablet';
+                return 'desktop';
+            },
 
-        /**
-         * Deteksi breakpoint berdasarkan lebar container chart.
-         * Return: 'mobile' | 'tablet' | 'desktop'
-         */
-        detectBreakpoint() {
-            const el = this.$refs.chart;
-            if (!el) return 'desktop';
-            const w = el.clientWidth || window.innerWidth;
-            if (w < 640) return 'mobile';
-            if (w < 1024) return 'tablet';
-            return 'desktop';
-        },
+            render() {
+                if (this.chart) {
+                    this.chart.destroy();
+                    this.chart = null;
+                }
 
-        render() {
-            if (this.chart) {
-                this.chart.destroy();
-                this.chart = null;
-            }
+                const container = this.$refs.chart;
+                if (!container) return;
+                container.innerHTML = '';
 
-            const container = this.$refs.chart;
-            if (!container) return;
-            container.innerHTML = '';
+                if (!this.data || this.data.length === 0) {
+                    container.innerHTML =
+                        '<div class="flex h-[320px] items-center justify-center text-xs text-stone-400">Tidak ada data pada periode ini</div>';
+                    return;
+                }
 
-            if (!this.data || this.data.length === 0) {
-                container.innerHTML =
-                    '<div class="flex h-[320px] items-center justify-center text-xs text-stone-400">Tidak ada data pada periode ini</div>';
-                return;
-            }
+                this.chart = new ApexCharts(container, this.buildOptions(this.buildSeries()));
+                this.chart.render();
+            },
 
-            this.chart = new ApexCharts(container, this.buildOptions(this.buildSeries()));
-            this.chart.render();
-        },
+            buildSeries() {
+                if (this.type === 'candlestick') {
+                    return [{
+                        name: 'Revenue',
+                        data: this.data.map(d => ({
+                            x: d.label,
+                            y: [d.o, d.h, d.l, d.c],
+                        })),
+                    }];
+                }
 
-        buildSeries() {
-            if (this.type === 'candlestick') {
                 return [{
                     name: 'Revenue',
                     data: this.data.map(d => ({
                         x: d.label,
-                        y: [d.o, d.h, d.l, d.c],
+                        y: d.revenue,
                     })),
                 }];
-            }
+            },
 
-            return [{
-                name: 'Revenue',
-                data: this.data.map(d => ({
-                    x: d.label,
-                    y: d.revenue,
-                })),
-            }];
-        },
+            buildOptions(series) {
+                const isCandle = this.type === 'candlestick';
+                const isBar = this.type === 'bar';
+                const isDark = document.documentElement.classList.contains('dark');
 
-        buildOptions(series) {
-            const isCandle = this.type === 'candlestick';
-            const isBar = this.type === 'bar';
-            const isDark = document.documentElement.classList.contains('dark');
+                // Deteksi breakpoint & konfigurasi adaptif
+                const bp = this.detectBreakpoint();
+                const isMobile = bp === 'mobile';
+                const isTablet = bp === 'tablet';
+                const isDesktop = bp === 'desktop';
 
-            // Deteksi breakpoint & konfigurasi adaptif
-            const bp = this.detectBreakpoint();
-            const isMobile = bp === 'mobile';
-            const isTablet = bp === 'tablet';
-            const isDesktop = bp === 'desktop';
+                // Tinggi chart adaptif
+                const chartHeight = isMobile ? 280 : (isTablet ? 320 : 360);
 
-            // Tinggi chart adaptif
-            const chartHeight = isMobile ? 280 : (isTablet ? 320 : 360);
+                // Rotasi label X: 90° di mobile, 45° di tablet, 30° di desktop
+                const labelRotate = isMobile ? -90 : (isTablet ? -45 : -30);
+                const labelRotateAlways = isMobile; // paksa selalu rotate di mobile
 
-            // Rotasi label X: 90° di mobile, 45° di tablet, 30° di desktop
-            const labelRotate = isMobile ? -90 : (isTablet ? -45 : -30);
-            const labelRotateAlways = isMobile; // paksa selalu rotate di mobile
+                // Ukuran font label
+                const labelFontSize = isMobile ? '9px' : '10px';
 
-            // Ukuran font label
-            const labelFontSize = isMobile ? '9px' : '10px';
+                // Jumlah tick X: mobile lebih sedikit biar tidak tumpang tindih
+                const maxTicks = isMobile ? 6 : (isTablet ? 10 : 15);
 
-            // Jumlah tick X: mobile lebih sedikit biar tidak tumpang tindih
-            const maxTicks = isMobile ? 6 : (isTablet ? 10 : 15);
+                // Padding grid
+                const gridPadding = isMobile ? {
+                    left: 4,
+                    right: 4,
+                    bottom: 30
+                } : {
+                    left: 8,
+                    right: 8,
+                    bottom: 10
+                };
 
-            // Padding grid
-            const gridPadding = isMobile ? {
-                left: 4,
-                right: 4,
-                bottom: 30
-            } : {
-                left: 8,
-                right: 8,
-                bottom: 10
-            };
-
-            return {
-                series: series,
-                chart: {
-                    type: this.type,
-                    height: chartHeight,
-                    width: '100%',
-                    parentHeightOffset: 0,
-                    redrawOnParentResize: true,
-                    redrawOnWindowResize: true,
-                    toolbar: {
-                        show: false
-                    },
-                    fontFamily: 'inherit',
-                    background: 'transparent',
-                    animations: {
-                        enabled: true,
-                        speed: 400
-                    },
-                },
-                theme: {
-                    mode: isDark ? 'dark' : 'light'
-                },
-                plotOptions: {
-                    candlestick: {
-                        colors: {
-                            upward: '#16a34a',
-                            downward: '#dc2626'
-                        },
-                        wick: {
-                            useFillColor: true
-                        },
-                    },
-                    bar: {
-                        columnWidth: isMobile ? '70%' : '60%',
-                        borderRadius: 3
-                    },
-                },
-                stroke: {
-                    width: isBar ? 0 : (isCandle ? 1 : 2),
-                    curve: 'smooth',
-                },
-                colors: isCandle ? undefined : ['#84a98c'],
-                dataLabels: {
-                    enabled: false
-                },
-                markers: {
-                    size: isBar || isCandle ? 0 : (isMobile ? 2 : 4),
-                    colors: ['#84a98c'],
-                    strokeColors: isDark ? '#1c1917' : '#fff',
-                    strokeWidth: 2,
-                },
-                xaxis: {
-                    type: 'category',
-                    tickAmount: maxTicks, // ← batasi jumlah label
-                    labels: {
-                        style: {
-                            fontSize: labelFontSize,
-                            colors: isDark ? '#a8a29e' : '#78716c',
-                            fontWeight: 400,
-                        },
-                        rotate: labelRotate,
-                        rotateAlways: labelRotateAlways,
-                        trim: true,
-                        hideOverlappingLabels: true, // ← sembunyikan label tumpang tindih
-                        maxHeight: isMobile ? 80 : 60, // ← ruang label yang dirotasi
-                        offsetY: 0,
-                    },
-                    axisBorder: {
-                        show: false
-                    },
-                    axisTicks: {
-                        show: false
-                    },
-                },
-                yaxis: {
-                    labels: {
-                        style: {
-                            fontSize: labelFontSize,
-                            colors: isDark ? '#a8a29e' : '#78716c'
-                        },
-                        formatter: (val) => {
-                            if (Math.abs(val) >= 1_000_000) return 'Rp ' + (val / 1_000_000).toFixed(1) + 'jt';
-                            if (Math.abs(val) >= 1_000) return 'Rp ' + (val / 1_000).toFixed(0) + 'rb';
-                            return 'Rp ' + val;
-                        },
-                    },
-                },
-                grid: {
-                    borderColor: isDark ? '#292524' : '#e7e5e4',
-                    strokeDashArray: 4,
-                    xaxis: {
-                        lines: {
+                return {
+                    series: series,
+                    chart: {
+                        type: this.type,
+                        height: chartHeight,
+                        width: '100%',
+                        parentHeightOffset: 0,
+                        redrawOnParentResize: true,
+                        redrawOnWindowResize: true,
+                        toolbar: {
                             show: false
-                        }
+                        },
+                        fontFamily: 'inherit',
+                        background: 'transparent',
+                        animations: {
+                            enabled: true,
+                            speed: 400
+                        },
+                    },
+                    theme: {
+                        mode: isDark ? 'dark' : 'light'
+                    },
+                    plotOptions: {
+                        candlestick: {
+                            colors: {
+                                upward: '#16a34a',
+                                downward: '#dc2626'
+                            },
+                            wick: {
+                                useFillColor: true
+                            },
+                        },
+                        bar: {
+                            columnWidth: isMobile ? '70%' : '60%',
+                            borderRadius: 3
+                        },
+                    },
+                    stroke: {
+                        width: isBar ? 0 : (isCandle ? 1 : 2),
+                        curve: 'smooth',
+                    },
+                    colors: isCandle ? undefined : ['#84a98c'],
+                    dataLabels: {
+                        enabled: false
+                    },
+                    markers: {
+                        size: isBar || isCandle ? 0 : (isMobile ? 2 : 4),
+                        colors: ['#84a98c'],
+                        strokeColors: isDark ? '#1c1917' : '#fff',
+                        strokeWidth: 2,
+                    },
+                    xaxis: {
+                        type: 'category',
+                        tickAmount: maxTicks, // ← batasi jumlah label
+                        labels: {
+                            style: {
+                                fontSize: labelFontSize,
+                                colors: isDark ? '#a8a29e' : '#78716c',
+                                fontWeight: 400,
+                            },
+                            rotate: labelRotate,
+                            rotateAlways: labelRotateAlways,
+                            trim: true,
+                            hideOverlappingLabels: true, // ← sembunyikan label tumpang tindih
+                            maxHeight: isMobile ? 80 : 60, // ← ruang label yang dirotasi
+                            offsetY: 0,
+                        },
+                        axisBorder: {
+                            show: false
+                        },
+                        axisTicks: {
+                            show: false
+                        },
                     },
                     yaxis: {
-                        lines: {
-                            show: true
-                        }
-                    },
-                    padding: gridPadding,
-                },
-                legend: {
-                    show: !isMobile, // sembunyikan legend di mobile biar hemat ruang
-                    fontSize: '10px',
-                },
-                tooltip: {
-                    theme: isDark ? 'dark' : 'light',
-                    style: {
-                        fontSize: isMobile ? '10px' : '11px',
-                    },
-                    y: {
-                        formatter: (val, opts) => {
-                            if (isCandle) {
-                                const point = opts.w.config.series[opts.seriesIndex].data[opts
-                                    .dataPointIndex];
-                                const [o, h, l, c] = point.y;
-                                const fmt = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
-                                // Format multi-baris kalau di desktop, satu baris kalau mobile
-                                if (isMobile) {
-                                    return `O: ${fmt(o)} H: ${fmt(h)} L: ${fmt(l)} C: ${fmt(c)}`;
-                                }
-                                return [
-                                    `Open: ${fmt(o)}`,
-                                    `High: ${fmt(h)}`,
-                                    `Low: ${fmt(l)}`,
-                                    `Close: ${fmt(c)}`,
-                                ].join(' | ');
-                            }
-                            return 'Rp ' + Number(val).toLocaleString('id-ID');
+                        labels: {
+                            style: {
+                                fontSize: labelFontSize,
+                                colors: isDark ? '#a8a29e' : '#78716c'
+                            },
+                            formatter: (val) => {
+                                if (Math.abs(val) >= 1_000_000) return 'Rp ' + (val / 1_000_000).toFixed(
+                                    1) + 'jt';
+                                if (Math.abs(val) >= 1_000) return 'Rp ' + (val / 1_000).toFixed(0) + 'rb';
+                                return 'Rp ' + val;
+                            },
                         },
                     },
-                },
-            };
-        },
-    }));
-</script>
+                    grid: {
+                        borderColor: isDark ? '#292524' : '#e7e5e4',
+                        strokeDashArray: 4,
+                        xaxis: {
+                            lines: {
+                                show: false
+                            }
+                        },
+                        yaxis: {
+                            lines: {
+                                show: true
+                            }
+                        },
+                        padding: gridPadding,
+                    },
+                    legend: {
+                        show: !isMobile, // sembunyikan legend di mobile biar hemat ruang
+                        fontSize: '10px',
+                    },
+                    tooltip: {
+                        theme: isDark ? 'dark' : 'light',
+                        style: {
+                            fontSize: isMobile ? '10px' : '11px',
+                        },
+                        y: {
+                            formatter: (val, opts) => {
+                                if (isCandle) {
+                                    const point = opts.w.config.series[opts.seriesIndex].data[opts
+                                        .dataPointIndex];
+                                    const [o, h, l, c] = point.y;
+                                    const fmt = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
+                                    // Format multi-baris kalau di desktop, satu baris kalau mobile
+                                    if (isMobile) {
+                                        return `O: ${fmt(o)} H: ${fmt(h)} L: ${fmt(l)} C: ${fmt(c)}`;
+                                    }
+                                    return [
+                                        `Open: ${fmt(o)}`,
+                                        `High: ${fmt(h)}`,
+                                        `Low: ${fmt(l)}`,
+                                        `Close: ${fmt(c)}`,
+                                    ].join(' | ');
+                                }
+                                return 'Rp ' + Number(val).toLocaleString('id-ID');
+                            },
+                        },
+                    },
+                };
+            },
+        }));
+    </script>
 @endscript

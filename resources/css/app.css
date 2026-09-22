@@ -24,7 +24,7 @@ html[data-theme-navigation] *::after {
         "DM Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
         "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --font-display: "DM Serif Display", Georgia, ui-serif, serif;
-    --font-mono: "DM Mono", ui-monospace, "Cascadia Code", monospace;
+    --font-mono: ui-monospace, "Cascadia Code", monospace;
 
     /* Zinc (bawaan Flux — tetap dipertahankan) */
     --color-zinc-50: #fafafa;
