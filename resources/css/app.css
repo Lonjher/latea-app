@@ -1,6 +1,6 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 @import "../../vendor/livewire/flux/dist/flux.css";
-@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap");
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -8,6 +8,12 @@
 @source '../../vendor/livewire/flux/stubs/**/*.blade.php';
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+html[data-theme-navigation] *,
+html[data-theme-navigation] *::before,
+html[data-theme-navigation] *::after {
+    transition: none !important;
+}
 
 /* ================================================
    THEME TOKENS
@@ -18,7 +24,7 @@
         "DM Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
         "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --font-display: "DM Serif Display", Georgia, ui-serif, serif;
-    --font-mono: "DM Mono", ui-monospace, "Cascadia Code", monospace;
+    --font-mono: ui-monospace, "Cascadia Code", monospace;
 
     /* Zinc (bawaan Flux — tetap dipertahankan) */
     --color-zinc-50: #fafafa;

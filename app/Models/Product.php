@@ -2,9 +2,57 @@
 
 namespace App\Models;
 
+use App\Casts\RupiahCast;
+use Illuminate\Database\Eloquent\Attributes\Guarded;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property string $code
+ * @property string $name
+ * @property string $description
+ * @property string $image
+ * @property float $initial_price
+ * @property float $discount_price
+ * @property float $minimal_discount
+ * @property float $price
+ * @property boolean $is_active
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ */
+#[Guarded(['id'])]
 class Product extends Model
 {
-    //
+    // protected function casts(): array
+    // {
+    //     return [
+    //         'initial_price' => RupiahCast::class,
+    //         'discount_price' => RupiahCast::class,
+    //         'price' => RupiahCast::class,
+    //     ];
+    // }
+
+    public function stores()
+    {
+        return $this->belongsToMany(Store::class, 'store_products')
+            ->withPivot(['price', 'is_available'])
+            ->withTimestamps();
+    }
+
+    public function saleItems()
+    {
+        return $this->hasMany(SaleItem::class);
+    }
+
+    public function effectivePriceFor(int $quantity): float
+    {
+        if ($this->discount_price
+            && $this->minimal_discount
+            && $quantity >= $this->minimal_discount) {
+            return (float) $this->discount_price;
+        }
+
+        return (float) $this->price;
+    }
 }

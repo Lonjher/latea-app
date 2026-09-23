@@ -17,6 +17,9 @@ return new class extends Migration
             $table->string('name');
             $table->text('description');
             $table->string('image')->nullable();
+            $table->decimal('initial_price', 15, 2);
+            $table->decimal('discount_price', 15, 2)->nullable();
+            $table->tinyInteger('minimal_discount')->nullable();
             $table->decimal('price', 15, 2);
             $table->boolean('is_active');
             $table->timestamps();
