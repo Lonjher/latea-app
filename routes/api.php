@@ -20,7 +20,9 @@ Route::prefix('mobile')->group(function () {
         Route::post('/logout', [MobileAuthController::class, 'logout']);
 
         Route::get('/products', [MobileProductController::class, 'index']);
+
         Route::get('/sales',      [MobileSaleController::class, 'index']);
+        Route::get('/sales/product-summary',  [MobileSaleController::class, 'productSummary']);
         Route::post('/sales',     [MobileSaleController::class, 'store']);
         Route::get('/sales/{sale}', [MobileSaleController::class, 'show']);
     });

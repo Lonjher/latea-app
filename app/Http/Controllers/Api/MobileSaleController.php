@@ -221,4 +221,39 @@ class MobileSaleController extends Controller
             'status'          => $sale->status,
         ];
     }
+
+    /**
+     * Ringkasan jumlah terjual per produk (per hari / range tanggal).
+     */
+    public function productSummary(Request $request)
+    {
+        $user = $request->user();
+
+        $dateFrom = $request->date_from ?? now()->toDateString();
+        $dateTo   = $request->date_to ?? now()->toDateString();
+
+        $rows = DB::table('sale_items')
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->where('sales.cashier_id', $user->id)
+            ->where('sales.status', 'completed')
+            ->whereDate('sales.sale_date', '>=', $dateFrom)
+            ->whereDate('sales.sale_date', '<=', $dateTo)
+            ->selectRaw('
+                sale_items.product_id,
+                sale_items.product_name,
+                sale_items.product_code,
+                SUM(sale_items.quantity) as total_qty,
+                SUM(sale_items.line_total) as total_revenue
+            ')
+            ->groupBy(
+                'sale_items.product_id',
+                'sale_items.product_name',
+                'sale_items.product_code'
+            )
+            ->orderByDesc('total_qty')
+            ->get();
+
+        return response()->json(['data' => $rows]);
+    }
+
 }
