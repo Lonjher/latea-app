@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Guarded;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
@@ -36,5 +37,10 @@ class Store extends Model
     public function sales()
     {
         return $this->hasMany(Sale::class);
+    }
+
+    public function operationals(): HasMany
+    {
+        return $this->hasMany(OperationalCost::class);
     }
 }

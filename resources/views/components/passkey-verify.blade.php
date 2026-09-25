@@ -1,10 +1,10 @@
-@props([
+{{-- @props([
     'optionsRoute' => 'passkey.login-options',
     'submitRoute' => 'passkey.login',
     'label' => __('Sign in with a passkey'),
     'loadingLabel' => __('Authenticating...'),
     'separator' => __('Or continue with email'),
-])
+]) --}}
 
 @assets
 @vite('resources/js/passkeys.js')
@@ -29,8 +29,8 @@
             try {
                 const response = await window.Passkeys.verify({
                     routes: {
-                        options: '{{ route($optionsRoute) }}',
-                        submit: '{{ route($submitRoute) }}',
+                        options: '',
+                        submit: '',
                     },
                 });
                 Livewire.navigate(response.redirect || '/dashboard');

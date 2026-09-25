@@ -35,7 +35,7 @@ new #[Title('Manage Sales')] class extends Component {
                 $query->whereDate('sale_date', '<=', $this->dateTo);
             })
             ->orderByDesc('sale_date')
-            ->take(15) // ← ganti paginate(15)
+            ->take(15)
             ->get(); // ← get, bukan paginate
 
         // Summary dihitung dari SELURUH data (tanpa filter & tanpa take)

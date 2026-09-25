@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
@@ -16,14 +17,14 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Admin User',
                 'email' => 'admin@example.com',
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
                 'is_active' => true,
                 'role_id' => 1,
             ],
             [
                 'name' => 'Cashier One',
                 'email' => 'cashier1@example.com',
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
                 'is_active' => true,
                 'role_id' => 2,
                 'store_id' => 1,
@@ -31,7 +32,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Cashier Two',
                 'email' => 'cashier2@example.com',
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
                 'is_active' => true,
                 'role_id' => 2,
                 'store_id' => 2,
@@ -39,7 +40,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Cashier Three',
                 'email' => 'cashier3@example.com',
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
                 'is_active' => true,
                 'role_id' => 2,
                 'store_id' => 3,
