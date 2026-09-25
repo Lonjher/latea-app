@@ -145,6 +145,7 @@ class MobileSaleController extends Controller
         $sales = Sale::query()
             ->where('cashier_id', $user->id)
             ->withCount('items')
+            ->withSum('items as total_quantity', 'quantity')   // ⭐ BARU
             ->when($request->date_from, fn ($q) => $q->whereDate('sale_date', '>=', $request->date_from))
             ->when($request->date_to, fn ($q) => $q->whereDate('sale_date', '<=', $request->date_to))
             ->orderByDesc('sale_date')
@@ -156,7 +157,8 @@ class MobileSaleController extends Controller
                 'invoice_number'  => $sale->invoice_number,
                 'sale_date'       => $sale->sale_date->toIso8601String(),
                 'total'           => (float) $sale->total,
-                'items_count'     => $sale->items_count,
+                'items_count'     => $sale->items_count,           // tetap ada (jenis produk)
+                'total_quantity'  => (int) ($sale->total_quantity ?? 0),  // ⭐ BARU (total qty)
                 'status'          => $sale->status,
             ]),
             'meta' => [
