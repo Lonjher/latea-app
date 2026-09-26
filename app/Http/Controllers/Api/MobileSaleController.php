@@ -145,6 +145,7 @@ class MobileSaleController extends Controller
         $sales = Sale::query()
             ->where('cashier_id', $user->id)
             ->withCount('items')
+            ->withSum('items as total_quantity', 'quantity')   // ⭐ BARU
             ->when($request->date_from, fn ($q) => $q->whereDate('sale_date', '>=', $request->date_from))
             ->when($request->date_to, fn ($q) => $q->whereDate('sale_date', '<=', $request->date_to))
             ->orderByDesc('sale_date')
@@ -156,7 +157,8 @@ class MobileSaleController extends Controller
                 'invoice_number'  => $sale->invoice_number,
                 'sale_date'       => $sale->sale_date->toIso8601String(),
                 'total'           => (float) $sale->total,
-                'items_count'     => $sale->items_count,
+                'items_count'     => $sale->items_count,           // tetap ada (jenis produk)
+                'total_quantity'  => (int) ($sale->total_quantity ?? 0),  // ⭐ BARU (total qty)
                 'status'          => $sale->status,
             ]),
             'meta' => [
@@ -221,4 +223,39 @@ class MobileSaleController extends Controller
             'status'          => $sale->status,
         ];
     }
+
+    /**
+     * Ringkasan jumlah terjual per produk (per hari / range tanggal).
+     */
+    public function productSummary(Request $request)
+    {
+        $user = $request->user();
+
+        $dateFrom = $request->date_from ?? now()->toDateString();
+        $dateTo   = $request->date_to ?? now()->toDateString();
+
+        $rows = DB::table('sale_items')
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->where('sales.cashier_id', $user->id)
+            ->where('sales.status', 'completed')
+            ->whereDate('sales.sale_date', '>=', $dateFrom)
+            ->whereDate('sales.sale_date', '<=', $dateTo)
+            ->selectRaw('
+                sale_items.product_id,
+                sale_items.product_name,
+                sale_items.product_code,
+                SUM(sale_items.quantity) as total_qty,
+                SUM(sale_items.line_total) as total_revenue
+            ')
+            ->groupBy(
+                'sale_items.product_id',
+                'sale_items.product_name',
+                'sale_items.product_code'
+            )
+            ->orderByDesc('total_qty')
+            ->get();
+
+        return response()->json(['data' => $rows]);
+    }
+
 }
