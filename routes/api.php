@@ -25,5 +25,7 @@ Route::prefix('mobile')->group(function () {
         Route::get('/sales/product-summary',  [MobileSaleController::class, 'productSummary']);
         Route::post('/sales',     [MobileSaleController::class, 'store']);
         Route::get('/sales/{sale}', [MobileSaleController::class, 'show']);
+        Route::put('/sales/{sale}', [MobileSaleController::class, 'update']);
+        Route::delete('/sales/{sale}', [MobileSaleController::class, 'destroy']);
     });
 });

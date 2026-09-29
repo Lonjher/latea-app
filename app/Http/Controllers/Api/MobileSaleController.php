@@ -175,7 +175,8 @@ class MobileSaleController extends Controller
      */
     public function show(Request $request, Sale $sale)
     {
-        if ($sale->cashier_id !== $request->user()->id) {
+        $user = $request->user();
+        if ((int) $sale->cashier_id !== (int) $user->id) {
             return response()->json([
                 'message' => 'Anda tidak memiliki akses ke transaksi ini.',
             ], 403);
@@ -256,6 +257,146 @@ class MobileSaleController extends Controller
             ->get();
 
         return response()->json(['data' => $rows]);
+    }
+
+    /**
+     * ⭐ Validasi sale boleh diubah/hapus.
+     */
+    private function authorizeSale(Sale $sale, Request $request): void
+    {
+        $user = $request->user();
+
+        if ((int) $sale->cashier_id !== (int) $user->id) {
+            abort(403, 'Anda tidak memiliki akses ke transaksi ini.');
+        }
+
+        if (! $sale->sale_date->isToday()) {
+            abort(403, 'Hanya transaksi hari ini yang dapat diubah.');
+        }
+
+        if ($sale->status !== 'completed') {
+            abort(403, 'Transaksi ini tidak dapat diubah.');
+        }
+    }
+
+    /**
+     * ⭐ Update sale — replace semua items.
+     */
+    public function update(Request $request, Sale $sale)
+    {
+        $this->authorizeSale($sale, $request);
+
+        $validated = $request->validate([
+            'items'              => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
+            'items.*.quantity'   => ['required', 'integer', 'min:1'],
+            'payment_amount'     => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $user    = $request->user();
+        $storeId = $user->store_id;
+
+        return DB::transaction(function () use ($validated, $sale, $storeId) {
+            // ── Hitung ulang (logika sama dengan store()) ──
+            $subtotal    = 0;
+            $total       = 0;
+            $itemsData   = [];
+
+            foreach ($validated['items'] as $item) {
+                $product = Product::with([
+                    'stores' => fn ($q) => $q->where('stores.id', $storeId)
+                        ->withPivot(['price', 'is_available']),
+                ])->find($item['product_id']);
+
+                if (! $product) {
+                    throw ValidationException::withMessages([
+                        'items' => ["Produk ID {$item['product_id']} tidak ditemukan."],
+                    ]);
+                }
+
+                $pivot = $product->stores->first()?->pivot;
+                if (! $pivot || ! $pivot->is_available) {
+                    throw ValidationException::withMessages([
+                        'items' => ["Produk {$product->name} tidak tersedia di toko Anda."],
+                    ]);
+                }
+
+                $basePrice = $pivot->price !== null
+                    ? (float) $pivot->price
+                    : (float) $product->price;
+
+                $discountPrice   = $product->discount_price !== null
+                    ? (float) $product->discount_price
+                    : null;
+                $minimalDiscount = $product->minimal_discount;
+
+                $qty            = (int) $item['quantity'];
+                $effectivePrice = $basePrice;
+
+                if (
+                    $discountPrice !== null
+                    && $minimalDiscount !== null
+                    && $qty >= $minimalDiscount
+                ) {
+                    $effectivePrice = $discountPrice;
+                }
+
+                $lineTotal  = $effectivePrice * $qty;
+                $subtotal  += $basePrice * $qty;
+                $total     += $lineTotal;
+
+                $itemsData[] = [
+                    'product_id'      => $product->id,
+                    'product_name'    => $product->name,
+                    'product_code'    => $product->code,
+                    'price'           => $basePrice,
+                    'discount_price'  => $discountPrice,
+                    'effective_price' => $effectivePrice,
+                    'quantity'        => $qty,
+                    'line_total'      => $lineTotal,
+                ];
+            }
+
+            $paymentAmount = (float) $validated['payment_amount'];
+
+            if ($paymentAmount < $total) {
+                throw ValidationException::withMessages([
+                    'payment_amount' => ['Uang diterima kurang dari total transaksi.'],
+                ]);
+            }
+
+            // ── Update header ──
+            $sale->update([
+                'subtotal'        => $subtotal,
+                'discount_amount' => $subtotal - $total,
+                'total'           => $total,
+                'payment_amount'  => $paymentAmount,
+                'change_amount'   => $paymentAmount - $total,
+                'sale_date'       => now(),  // ⭐ update timestamp
+            ]);
+
+            // ── Replace items: hapus lama, insert baru ──
+            $sale->items()->delete();
+            $sale->items()->createMany($itemsData);
+
+            return response()->json([
+                'data' => $this->salePayload($sale->fresh(['items', 'store'])),
+            ]);
+        });
+    }
+
+    /**
+     * ⭐ Soft delete — set status jadi 'void'.
+     */
+    public function destroy(Request $request, Sale $sale)
+    {
+        $this->authorizeSale($sale, $request);
+
+        $sale->update(['status' => 'void']);
+
+        return response()->json([
+            'message' => 'Transaksi berhasil dibatalkan.',
+        ]);
     }
 
 }
