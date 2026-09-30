@@ -65,12 +65,16 @@ new class extends Component {
      */
     protected function generateReadablePassword(): string
     {
-        $words = ['Sinar', 'Bumi', 'Langit', 'Samudra', 'Hutan', 'Bintang', 'Mentari', 'Angkasa', 'Purnama', 'Cahaya'];
-        $word = $words[array_rand($words)];
-        $number = str_pad((string) random_int(1000, 9999), 4, '0', STR_PAD_LEFT);
+        $chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        $password = '';
 
-        return $word . $number;
+        for ($i = 0; $i < 8; $i++) {
+            $password .= $chars[random_int(0, strlen($chars) - 1)];
+        }
+
+        return $password;
     }
+
 };
 ?>
 

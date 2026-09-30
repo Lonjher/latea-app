@@ -149,11 +149,18 @@ new #[Title('Manage Cashiers')] class extends Component {
 
                                 {{-- Cashier --}}
                                 <td class="px-2.5 py-1.5">
-                                    <div class="max-w-30 flex items-center gap-2 sm:max-w-xs">
-                                        <div
-                                            class="bg-sage-100 dark:bg-sage-900/60 text-sage-700 dark:text-sage-400 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold uppercase">
-                                            {{ mb_substr($cashier->name, 0, 2) }}
-                                        </div>
+                                    <div class="max-w-45 flex items-center gap-2 sm:max-w-xs">
+                                        {{-- ⭐ Avatar: gambar kalau ada, fallback inisial --}}
+                                        @if ($cashier->avatar)
+                                            <img src="{{ \Illuminate\Support\Facades\Storage::url($cashier->avatar) }}"
+                                                alt="{{ $cashier->name }}"
+                                                class="h-6 w-6 shrink-0 rounded-full border border-stone-200 object-cover dark:border-stone-700" />
+                                        @else
+                                            <div
+                                                class="bg-sage-100 dark:bg-sage-900/60 text-sage-700 dark:text-sage-400 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[9px] font-bold uppercase">
+                                                {{ mb_substr($cashier->name, 0, 2) }}
+                                            </div>
+                                        @endif
                                         <div class="truncate">
                                             <div class="truncate font-medium text-stone-800 dark:text-stone-200">
                                                 {{ $cashier->name }}

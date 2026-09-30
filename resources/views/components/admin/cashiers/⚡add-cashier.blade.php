@@ -4,8 +4,10 @@ use Livewire\Component;
 use App\Livewire\Forms\CashierForm;
 use App\Models\Store;
 use Illuminate\Validation\ValidationException;
+use Livewire\WithFileUploads;
 
 new class extends Component {
+    use WithFileUploads;
     public CashierForm $form;
 
     public function create()
@@ -77,8 +79,8 @@ new class extends Component {
                                 class="flex items-center gap-1.5 rounded-md border border-stone-100 bg-white px-2.5 py-1.5 shadow-sm dark:border-stone-700 dark:bg-stone-800">
                                 <svg class="h-3.5 w-3.5 animate-spin text-sage-600 dark:text-sage-400" fill="none"
                                     viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                        stroke-width="4"></circle>
+                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                        stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V12H4z"></path>
                                 </svg>
                                 <span class="text-[10px] font-medium text-stone-600 dark:text-stone-300">
@@ -88,6 +90,50 @@ new class extends Component {
                         </div>
 
                         <div class="space-y-2.5 pb-4">
+                            {{-- Avatar --}}
+                            <div>
+                                <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
+                                    {{ __('Avatar') }}
+                                </label>
+
+                                <div class="flex items-center gap-3">
+                                    {{-- Preview --}}
+                                    <div class="shrink-0">
+                                        @if ($form->avatar)
+                                            <img src="{{ $form->avatar->temporaryUrl() }}"
+                                                class="h-12 w-12 rounded-full border border-stone-200 object-cover dark:border-stone-700" />
+                                        @elseif ($form->existingAvatarUrl)
+                                            <img src="{{ $form->existingAvatarUrl }}"
+                                                class="h-12 w-12 rounded-full border border-stone-200 object-cover dark:border-stone-700" />
+                                        @else
+                                            <div
+                                                class="bg-sage-100 dark:bg-sage-900/60 text-sage-700 dark:text-sage-400 flex h-12 w-12 items-center justify-center rounded-full text-xs font-bold uppercase">
+                                                {{ mb_substr($form->name ?: '??', 0, 2) }}
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    {{-- Input --}}
+                                    <div class="flex-1">
+                                        <input wire:model="form.avatar" type="file" accept="image/*"
+                                            class="w-full cursor-pointer rounded-md border border-stone-200 bg-stone-50 text-[11px] text-stone-600 file:mr-2 file:cursor-pointer file:rounded-l-md file:border-0 file:bg-stone-100 file:px-3 file:py-1.5 file:text-[11px] file:font-medium file:text-stone-700 hover:file:bg-stone-200 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-400 dark:file:bg-stone-700 dark:file:text-stone-300" />
+                                        @error('form.avatar')
+                                            <p class="mt-0.5 text-[10px] text-red-500">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                {{-- Loading state --}}
+                                <div wire:loading wire:target="form.avatar"
+                                    class="text-sage-600 dark:text-sage-400 mt-1 flex items-center gap-1.5 text-[10px]">
+                                    <svg class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10"
+                                            stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                                    </svg>
+                                    {{ __('Mengupload...') }}
+                                </div>
+                            </div>
                             {{-- Name --}}
                             <div>
                                 <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
