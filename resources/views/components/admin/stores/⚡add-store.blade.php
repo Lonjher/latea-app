@@ -54,10 +54,10 @@ new class extends Component {
                 <div class="flex-shrink-0 space-y-3 p-4 pb-3">
                     <div>
                         <h3 class="text-sm font-semibold text-stone-800 dark:text-stone-100">
-                            {{ __('Add Store Baru') }}
+                            {{ __('Tambah Toko Baru') }}
                         </h3>
                         <p class="mt-0.5 text-[11px] leading-normal text-stone-500 dark:text-stone-400">
-                            {{ __('Isi data detail store untuk store baru.') }}
+                            {{ __('Isi data detail toko untuk toko baru.') }}
                         </p>
                     </div>
                     <div class="border-t border-stone-100 dark:border-stone-800"></div>
@@ -99,7 +99,7 @@ new class extends Component {
                             <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                                 <div>
                                     <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                        {{ __('Store Name') }}
+                                        {{ __('Nama Toko') }}
                                     </label>
                                     <input wire:model="form.name" type="text" required
                                         class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100" />
@@ -110,7 +110,7 @@ new class extends Component {
 
                                 <div>
                                     <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                        {{ __('Code') }}
+                                        {{ __('Kode') }}
                                     </label>
                                     <input wire:model="form.code" type="text" maxlength="8" placeholder="STORE....."
                                         required
@@ -124,7 +124,7 @@ new class extends Component {
                             {{-- Baris 2: Location --}}
                             <div>
                                 <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                    {{ __('Location') }}
+                                    {{ __('Lokasi') }}
                                 </label>
                                 <input wire:model="form.location" type="text" placeholder="Location of the store"
                                     required
@@ -137,13 +137,13 @@ new class extends Component {
                             {{-- Baris 3: Active --}}
                             <div>
                                 <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                    {{ __('Active') }}
+                                    {{ __('Status') }}
                                 </label>
                                 <select wire:model="form.is_active" required
                                     class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100">
-                                    <option value="">-- Select Active Status --</option>
-                                    <option value="1">Active</option>
-                                    <option value="0">Inactive</option>
+                                    <option value="">-- Pilih Status --</option>
+                                    <option value="1">Aktif</option>
+                                    <option value="0">Non Aktif</option>
                                 </select>
                                 @error('form.is_active')
                                     <p class="mt-0.5 text-[10px] text-red-500">{{ $message }}</p>

@@ -52,10 +52,10 @@ new class extends Component {
                 <div class="flex-shrink-0 space-y-3 p-4 pb-3">
                     <div>
                         <h3 class="text-sm font-semibold text-stone-800 dark:text-stone-100">
-                            {{ __('Add Cashier Baru') }}
+                            {{ __('Tambah Akun Baru') }}
                         </h3>
                         <p class="mt-0.5 text-[11px] leading-normal text-stone-500 dark:text-stone-400">
-                            {{ __('Isi data detail cashier untuk cashier baru.') }}
+                            {{ __('Isi data akun kasir untuk kasir baru.') }}
                         </p>
                     </div>
                     <div class="border-t border-stone-100 dark:border-stone-800"></div>
@@ -91,7 +91,7 @@ new class extends Component {
                             {{-- Name --}}
                             <div>
                                 <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                    {{ __('Nama') }}
+                                    {{ __('Nama Lengkap') }}
                                 </label>
                                 <input wire:model="form.name" type="text" required
                                     class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100" />
@@ -136,11 +136,11 @@ new class extends Component {
                             {{-- Store --}}
                             <div>
                                 <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                    {{ __('Store') }}
+                                    {{ __('Toko') }}
                                 </label>
                                 <select wire:model="form.store_id" required
                                     class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100">
-                                    <option value="">-- Pilih Store --</option>
+                                    <option value="">-- Pilih Toko --</option>
                                     @foreach (\App\Models\Store::orderBy('name')->get() as $store)
                                         <option value="{{ $store->id }}">{{ $store->name }}</option>
                                     @endforeach
@@ -169,7 +169,7 @@ new class extends Component {
                                     <div class="flex flex-col">
                                         <span
                                             class="text-[11px] font-medium {{ $form->is_active ? 'text-sage-700 dark:text-sage-400' : 'text-stone-500 dark:text-stone-400' }}">
-                                            {{ $form->is_active ? __('Active') : __('Inactive') }}
+                                            {{ $form->is_active ? __('Aktif') : __('Non Aktif') }}
                                         </span>
                                         <span class="text-[10px] text-stone-400 dark:text-stone-500">
                                             {{ $form->is_active ? __('Kasir dapat login & bertransaksi.') : __('Kasir tidak dapat login.') }}

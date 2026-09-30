@@ -102,7 +102,7 @@ new class extends Component {
                                 <div>
                                     <label
                                         class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                        {{ __('Code') }}
+                                        {{ __('Kode') }}
                                     </label>
                                     <input wire:model="form.code" type="text" maxlength="255" placeholder="PROD-001"
                                         required
@@ -115,7 +115,7 @@ new class extends Component {
                                 <div>
                                     <label
                                         class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                        {{ __('Product Name') }}
+                                        {{ __('Nama Produk') }}
                                     </label>
                                     <input wire:model="form.name" type="text" required
                                         class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100" />
@@ -128,7 +128,7 @@ new class extends Component {
                             {{-- Baris 2: Description --}}
                             <div>
                                 <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                    {{ __('Description') }}
+                                    {{ __('Deskripsi') }}
                                 </label>
                                 <textarea wire:model="form.description" rows="3" required placeholder="Deskripsi produk..."
                                     class="w-full resize-none rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100"></textarea>
@@ -140,7 +140,7 @@ new class extends Component {
                             {{-- Baris 3: Image Upload dengan Preview --}}
                             <div>
                                 <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                    {{ __('Product Image') }}
+                                    {{ __('Gambar Produk') }}
                                 </label>
 
                                 <div x-data="{
@@ -377,10 +377,10 @@ new class extends Component {
                                     <button type="button" wire:click="$toggle('form.is_active')" role="switch"
                                         aria-checked="{{ $form->is_active ? 'true' : 'false' }}"
                                         class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-1
-                {{ $form->is_active ? 'bg-sage-600 dark:bg-sage-500' : 'bg-stone-300 dark:bg-stone-600' }}">
+                                            {{ $form->is_active ? 'bg-sage-600 dark:bg-sage-500' : 'bg-stone-300 dark:bg-stone-600' }}">
                                         <span
                                             class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform
-                    {{ $form->is_active ? 'translate-x-[18px]' : 'translate-x-0.5' }}">
+                                            {{ $form->is_active ? 'translate-x-[18px]' : 'translate-x-0.5' }}">
                                         </span>
                                     </button>
 
@@ -388,7 +388,7 @@ new class extends Component {
                                     <div class="flex flex-col">
                                         <span
                                             class="text-[11px] font-medium {{ $form->is_active ? 'text-sage-700 dark:text-sage-400' : 'text-stone-500 dark:text-stone-400' }}">
-                                            {{ $form->is_active ? __('Active') : __('Inactive') }}
+                                            {{ $form->is_active ? __('Aktif') : __('Non Aktif') }}
                                         </span>
                                         <span class="text-[10px] text-stone-400 dark:text-stone-500">
                                             {{ $form->is_active ? __('Produk tampil di katalog.') : __('Produk disembunyikan.') }}

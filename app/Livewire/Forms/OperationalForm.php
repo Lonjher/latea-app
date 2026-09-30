@@ -2,52 +2,46 @@
 
 namespace App\Livewire\Forms;
 
-use App\Models\OperationalCost;
-use App\Models\Store;
-use Livewire\Attributes\Validate;
 use Livewire\Form;
+use App\Models\OperationalCost;
+use Illuminate\Validation\Rule;
 
 class OperationalForm extends Form
 {
-    public ?OperationalCost $operationalCost = null;
+    public ?OperationalCost $operationalModel = null;
 
-    public $store_id;
-    public $operational;
+    public $operational_name;
     public $cost;
+    public $store_id;
 
     public function rules(): array
     {
         return [
-            'store_id' => ['required', 'exists:stores,id'],
-            'operational' => ['required', 'string', 'max:255'],
-            'cost' => ['required', 'numeric', 'min:0'],
+            'operational_name' => ['required', 'string', 'max:255'],
+            'cost'             => ['required', 'numeric', 'min:0'],
+            'store_id'         => ['required', 'integer', Rule::exists('stores', 'id')],
         ];
     }
 
     public function messages(): array
     {
         return [
-            // Code
-            'store_id.required' => 'Store wajib diisi.',
-            'store_id.string' => 'Store harus harus ada.',
-
-            // Name
-            'operational.required' => 'Kegiatan wajib diisi.',
-            'operational.string' => 'Kegiatan harus berupa teks.',
-            'operational.max' => 'Kegiatan maksimal 255 karakter.',
-
-            // Description
-            'cost.required' => 'Biaya wajib diisi.',
-            'cost.decimal' => 'Biaya harus berupa decimal.',
+            'operational_name.required' => 'Nama kegiatan wajib diisi.',
+            'operational_name.max'      => 'Nama kegiatan maksimal 255 karakter.',
+            'cost.required'             => 'Biaya wajib diisi.',
+            'cost.numeric'              => 'Biaya harus berupa angka.',
+            'cost.min'                  => 'Biaya tidak boleh negatif.',
+            'store_id.required'         => 'Toko wajib dipilih.',
+            'store_id.exists'           => 'Toko tidak valid.',
         ];
     }
 
-    public function setOperational(OperationalCost $operationalCost): void
+    public function setOperational(OperationalCost $op): void
     {
-        $this->operationalCost = $operationalCost;
-        $this->store_id = $operationalCost->store_id;
-        $this->operational = $operationalCost->operational;
-        $this->cost = $operationalCost->cost;
+        $this->operationalModel = $op;
+        $this->operational_name = $op->operational;
+        $this->cost             = $op->cost;
+        $this->store_id         = $op->store_id;   // ⭐ penting
     }
 
     public function create()
@@ -55,9 +49,9 @@ class OperationalForm extends Form
         $this->validate();
 
         OperationalCost::create([
-            'store_id' => $this->store_id,
-            'operational' => $this->operational,
-            'cost' => $this->cost,
+            'store_id'    => $this->store_id,
+            'operational' => $this->operational_name,
+            'cost'        => $this->cost,
         ]);
 
         return $this->reset();
@@ -67,10 +61,10 @@ class OperationalForm extends Form
     {
         $this->validate();
 
-        $this->operationalCost->update([
-            'store_id' => $this->store_id,
-            'operational' => $this->operational,
-            'cost' => $this->cost,
+        $this->operationalModel->update([
+            'store_id'    => $this->store_id,      // ⭐ boleh diubah (admin)
+            'operational' => $this->operational_name,
+            'cost'        => $this->cost,
         ]);
 
         return $this->reset();

@@ -3,15 +3,20 @@
 use Livewire\Component;
 use App\Livewire\Forms\OperationalForm;
 use App\Models\OperationalCost;
-use App\Models\Store;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 new class extends Component {
     public OperationalForm $form;
 
-    public function editOperational($operationalId)
+    public function editOperational(OperationalCost $operational)
     {
-        $operational = OperationalCost::with('store')->findOrFail($operationalId);
+
+        // ⭐ Guard: hanya bisa edit operational toko sendiri
+        if ((int) $operational->store_id !== (int) Auth::user()->store_id) {
+            abort(403, 'Anda tidak memiliki akses ke item ini.');
+        }
+
         $this->form->setOperational($operational);
     }
 
@@ -27,13 +32,6 @@ new class extends Component {
             $this->dispatch('operational-error', message: 'Terjadi kesalahan: ' . $e->getMessage());
             $this->dispatch('update-error', message: 'Terjadi kesalahan: ' . $e->getMessage());
         }
-    }
-
-    public function with()
-    {
-        return [
-            'stores' => Store::where('is_active', true)->orderBy('name')->get(),
-        ];
     }
 };
 ?>
@@ -88,7 +86,7 @@ new class extends Component {
                             {{ __('Edit Item Operational') }}
                         </h3>
                         <p class="mt-0.5 text-[11px] leading-normal text-stone-500 dark:text-stone-400">
-                            {{ __('Perbarui detail item pembiayaan.') }}
+                            {{ __('Perbarui detail biaya operasional toko Anda.') }}
                         </p>
                     </div>
                     <div class="border-t border-stone-100 dark:border-stone-800"></div>
@@ -107,7 +105,7 @@ new class extends Component {
                     </div>
 
                     <div class="relative">
-                        {{-- Loading update --}}
+                        {{-- Loading save --}}
                         <div wire:loading wire:target="updateOperational"
                             class="absolute inset-0 z-50 flex items-center justify-center rounded-md bg-white/60 backdrop-blur-[0.5px] dark:bg-stone-900/60">
                             <div class="flex items-center gap-1.5 rounded-md border border-stone-100 bg-white px-2.5 py-1.5 shadow-sm dark:border-stone-700 dark:bg-stone-800">
@@ -124,30 +122,13 @@ new class extends Component {
 
                         <div class="space-y-2.5 pb-4">
 
-                            {{-- ⭐ Store — bisa diubah (admin) --}}
-                            <div>
-                                <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                    {{ __('Toko') }}
-                                </label>
-                                <select wire:model="form.store_id"
-                                    class="focus:ring-sage-500 w-full rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 transition focus:outline-none focus:ring-1 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300">
-                                    <option value="">— Pilih Toko —</option>
-                                    @foreach ($stores as $store)
-                                        <option value="{{ $store->id }}">{{ $store->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('form.store_id')
-                                    <p class="mt-0.5 text-[10px] text-red-500">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            {{-- Kegiatan — ⭐ fix field name & error --}}
+                            {{-- Kegiatan --}}
                             <div>
                                 <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
                                     {{ __('Kegiatan / Nama Biaya') }}
                                 </label>
                                 <textarea wire:model="form.operational_name" rows="3" required
-                                    placeholder="cth: Listrik bulan September, Sewa toko"
+                                    placeholder="cth: Listrik bulan September, Sewa toko, Gaji kasir"
                                     class="w-full resize-none rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100"></textarea>
                                 @error('form.operational_name')
                                     <p class="mt-0.5 text-[10px] text-red-500">{{ $message }}</p>

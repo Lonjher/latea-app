@@ -2,6 +2,7 @@
 
 use Livewire\Component;
 use App\Models\Sale;
+use Illuminate\Support\Facades\Auth;
 
 new class extends Component {
     public ?int $saleId = null;
@@ -11,8 +12,17 @@ new class extends Component {
     public function openDetail(int $saleId): void
     {
         $this->isLoading = true;
-        $this->saleId = $saleId;
-        $this->sale = Sale::with(['store', 'items.product'])->findOrFail($saleId);
+
+        $user = Auth::user();
+
+        // ⭐ Guard: hanya bisa lihat sale sendiri
+        $sale = Sale::with(['store', 'items.product'])
+            ->where('id', $saleId)
+            ->where('cashier_id', $user->id)
+            ->firstOrFail();
+
+        $this->saleId = $sale->id;
+        $this->sale = $sale;
         $this->isLoading = false;
     }
 
@@ -70,7 +80,6 @@ new class extends Component {
                                         $statusClasses = [
                                             'completed' => 'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-400',
                                             'void' => 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400',
-                                            'refunded' => 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400',
                                         ][$sale->status] ?? 'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400';
                                     @endphp
                                     <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold {{ $statusClasses }}">
@@ -91,26 +100,24 @@ new class extends Component {
                             </button>
                         </div>
 
-                        {{-- Meta --}}
-                        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        {{-- Meta — 2 kolom: Total Item & Total Bayar --}}
+                        <div class="grid grid-cols-2 gap-2">
                             <div class="rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 dark:border-stone-700 dark:bg-stone-800/50">
-                                <p class="text-[10px] uppercase tracking-wider text-stone-500 dark:text-stone-400">{{ __('Kasir') }}</p>
-                                <p class="mt-0.5 truncate text-[11px] font-medium text-stone-800 dark:text-stone-200">
-                                    {{ $sale->cashier_name }}
+                                <p class="text-[10px] uppercase tracking-wider text-stone-500 dark:text-stone-400">
+                                    {{ __('Total Item') }}
                                 </p>
-                            </div>
-                            <div class="rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 dark:border-stone-700 dark:bg-stone-800/50">
-                                <p class="text-[10px] uppercase tracking-wider text-stone-500 dark:text-stone-400">{{ __('Toko') }}</p>
-                                <p class="mt-0.5 truncate text-[11px] font-medium text-stone-800 dark:text-stone-200">
-                                    {{ $sale->store?->name ?? '—' }}
-                                </p>
-                            </div>
-                            <div class="col-span-2 rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 sm:col-span-1 dark:border-stone-700 dark:bg-stone-800/50">
-                                <p class="text-[10px] uppercase tracking-wider text-stone-500 dark:text-stone-400">{{ __('Total Item') }}</p>
                                 <p class="mt-0.5 text-[11px] font-medium text-stone-800 dark:text-stone-200">
                                     {{ $sale->items->count() }} {{ __('item') }}
                                     ·
                                     {{ $sale->items->sum('quantity') }} {{ __('qty') }}
+                                </p>
+                            </div>
+                            <div class="rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 dark:border-stone-700 dark:bg-stone-800/50">
+                                <p class="text-[10px] uppercase tracking-wider text-stone-500 dark:text-stone-400">
+                                    {{ __('Metode') }}
+                                </p>
+                                <p class="mt-0.5 text-[11px] font-medium text-stone-800 dark:text-stone-200">
+                                    {{ __('Tunai') }}
                                 </p>
                             </div>
                         </div>
@@ -131,7 +138,8 @@ new class extends Component {
                                 @foreach ($sale->items as $item)
                                     @php
                                         $isDiscountUsed = $item->discount_price
-                                            && $item->discount_price < $item->price;
+                                            && $item->effective_price !== null
+                                            && (float) $item->effective_price === (float) $item->discount_price;
                                     @endphp
                                     <tr class="transition-colors hover:bg-stone-50 dark:hover:bg-stone-800/30">
                                         <td class="px-4 py-2">
@@ -157,14 +165,7 @@ new class extends Component {
                                         </td>
 
                                         <td class="px-3 py-2 text-right">
-                                            @php
-                                                $isDiscountUsed = $item->discount_price
-                                                    && $item->effective_price !== null
-                                                    && (float) $item->effective_price === (float) $item->discount_price;
-                                            @endphp
-
                                             @if ($isDiscountUsed)
-                                                {{-- Diskon dipakai: coret harga asli, tampilkan harga diskon --}}
                                                 <div class="font-mono text-[10px] text-stone-400 line-through dark:text-stone-500">
                                                     Rp {{ number_format($item->price, 0, ',', '.') }}
                                                 </div>
@@ -172,7 +173,6 @@ new class extends Component {
                                                     Rp {{ number_format($item->effective_price, 0, ',', '.') }}
                                                 </div>
                                             @else
-                                                {{-- Tidak pakai diskon: tampilkan harga normal --}}
                                                 <div class="font-mono text-stone-700 dark:text-stone-300">
                                                     Rp {{ number_format($item->price, 0, ',', '.') }}
                                                 </div>

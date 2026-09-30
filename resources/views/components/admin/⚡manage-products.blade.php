@@ -36,7 +36,7 @@ new #[Title('Manage Products')] class extends Component {
 ?>
 
 <div>
-    <x-page-header title="Manage Products" leading="Manage your products" />
+    <x-page-header title="Kelola Produk" leading="Kelola Produk Anda yang Ingin Dijual" />
 
     <div class="mx-auto mt-2 max-w-7xl space-y-2">
 
@@ -70,9 +70,9 @@ new #[Title('Manage Products')] class extends Component {
                 {{-- Filter Active --}}
                 <select wire:model.live="filterActive"
                     class="focus:ring-sage-500 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 transition focus:outline-none focus:ring-1 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300">
-                    <option value="">All Status</option>
-                    <option value="1">Active</option>
-                    <option value="0">Inactive</option>
+                    <option value="">Semua Status</option>
+                    <option value="1">Aktif</option>
+                    <option value="0">Non Aktif</option>
                 </select>
 
                 <a x-data x-on:click="$dispatch('add-product-modal')"
@@ -80,7 +80,7 @@ new #[Title('Manage Products')] class extends Component {
                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    Add Product
+                    Tambah
                 </a>
 
             </div>
@@ -93,7 +93,7 @@ new #[Title('Manage Products')] class extends Component {
             {{-- Table meta --}}
             <div class="flex items-center justify-between border-b border-stone-100 py-2 dark:border-stone-800">
                 <span class="font-mono text-[10px] uppercase tracking-wider text-stone-400 dark:text-stone-500">
-                    {{ $products->total() }} {{ __('products found') }}
+                    {{ $products->total() }} {{ __('produk ditemukan') }}
                 </span>
                 <div wire:loading class="text-sage-600 dark:text-sage-400 flex items-center gap-1 text-[11px]">
                     <svg class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -113,11 +113,11 @@ new #[Title('Manage Products')] class extends Component {
                         <tr
                             class="border-b border-stone-200 bg-stone-50 font-semibold uppercase tracking-wider text-stone-500 dark:border-stone-800 dark:bg-stone-800/50 dark:text-stone-400">
                             <th class="w-6 px-2.5 py-1.5 text-center">#</th>
-                            <th class="px-2.5 py-1.5">{{ __('Product') }}</th>
-                            <th class="px-2.5 py-1.5">{{ __('Code') }}</th>
+                            <th class="px-2.5 py-1.5">{{ __('Produk') }}</th>
+                            <th class="px-2.5 py-1.5">{{ __('Kode') }}</th>
                             <th class="px-2.5 py-1.5 text-right">{{ __('Harga') }}</th>
                             <th class="px-2.5 py-1.5 text-right">{{ __('Diskon') }}</th>
-                            <th class="w-20 px-2.5 py-1.5 text-center">{{ __('Active') }}</th>
+                            <th class="w-20 px-2.5 py-1.5 text-center">{{ __('Status') }}</th>
                             <th class="w-20 px-2.5 py-1.5 text-right">{{ __('Aksi') }}</th>
                         </tr>
                     </thead>

@@ -34,7 +34,7 @@ new #[Title('Manage Stores')] class extends Component {
 ?>
 
 <div>
-    <x-page-header title="Manage Stores" leading="Manage your stores" />
+    <x-page-header title="Kelola Toko" leading="Kelola Toko Anda" />
 
     <div class="mx-auto mt-2 max-w-7xl space-y-2">
 
@@ -61,16 +61,16 @@ new #[Title('Manage Stores')] class extends Component {
                             d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
                     </svg>
                     <input wire:model.live.debounce.300ms="search" type="text"
-                        placeholder="Cari nama atauCode..."
+                        placeholder="Cari nama atau Kode..."
                         class="focus:ring-sage-500 w-full rounded-lg border border-stone-200 bg-stone-50 py-1.5 pl-8 pr-3 text-xs text-stone-800 transition placeholder:text-stone-400 focus:border-transparent focus:outline-none focus:ring-1 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500" />
                 </div>
 
                 {{-- Filter Gender --}}
                 <select wire:model.live="filterActive"
                     class="focus:ring-sage-500 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 transition focus:outline-none focus:ring-1 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300">
-                    <option :value="null">All Status</option>
-                    <option value="1">Active</option>
-                    <option value="0">Inactive</option>
+                    <option :value="null">Semua Status</option>
+                    <option value="1">Aktif</option>
+                    <option value="0">Non Aktif</option>
                 </select>
 
                 <a x-data x-on:click="$dispatch('add-store-modal')"
@@ -78,7 +78,7 @@ new #[Title('Manage Stores')] class extends Component {
                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    Add Store
+                    Tambah
                 </a>
 
             </div>
@@ -91,7 +91,7 @@ new #[Title('Manage Stores')] class extends Component {
             {{-- Table meta --}}
             <div class="flex items-center justify-between border-b border-stone-100 py-2 dark:border-stone-800">
                 <span class="font-mono text-[10px] uppercase tracking-wider text-stone-400 dark:text-stone-500">
-                    {{ $stores->total() }} {{ __('stores found') }}
+                    {{ $stores->total() }} {{ __('toko ditemukan') }}
                 </span>
                 <div wire:loading class="text-sage-600 dark:text-sage-400 flex items-center gap-1 text-[11px]">
                     <svg class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -111,11 +111,11 @@ new #[Title('Manage Stores')] class extends Component {
                         <tr
                             class="border-b border-stone-200 bg-stone-50 font-semibold uppercase tracking-wider text-stone-500 dark:border-stone-800 dark:bg-stone-800/50 dark:text-stone-400">
                             <th class="w-6 px-2.5 py-1.5 text-center">#</th>
-                            <th class="px-2.5 py-1.5">{{ __('Store') }}</th>
-                            <th class="px-2.5 py-1.5">{{ __('Code') }}</th>
-                            <th class="px-2.5 py-1.5">{{ __('Location') }}</th>
-                            <th class="px-2.5 py-1.5">{{ __('Products') }}</th>
-                            <th class="w-10 px-2.5 py-1.5 text-center">{{ __('Active') }}</th>
+                            <th class="px-2.5 py-1.5">{{ __('Toko') }}</th>
+                            <th class="px-2.5 py-1.5">{{ __('Kode') }}</th>
+                            <th class="px-2.5 py-1.5">{{ __('Lokasi') }}</th>
+                            <th class="px-2.5 py-1.5">{{ __('Produk') }}</th>
+                            <th class="w-10 px-2.5 py-1.5 text-center">{{ __('Status') }}</th>
                             <th class="w-20 px-2.5 py-1.5 text-right">{{ __('Aksi') }}</th>
                         </tr>
                     </thead>
