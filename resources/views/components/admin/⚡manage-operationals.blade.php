@@ -4,8 +4,9 @@ use Livewire\Component;
 use App\Models\Store;
 use App\Models\OperationalCost;
 use Livewire\WithPagination;
+use Livewire\Attributes\Title;
 
-new class extends Component {
+new #[Title("Manage Operationals")] class extends Component {
     use WithPagination;
 
     public $filterStore = '';

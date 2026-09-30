@@ -331,7 +331,7 @@
                 </button>
                 <span class="mobile-title">Latea App</span>
                 <flux:dropdown position="top" align="end">
-                    <flux:profile class="shadow-sm" avatar:color="cyan" :initials="auth()->user()->initials()"
+                    <flux:profile class="shadow-sm" avatar:color="cyan" avatar="{{ auth()->user()->avatar }}"
                         icon-trailing="chevron-down" />
                     <flux:menu>
                         <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
@@ -353,8 +353,8 @@
             <header class="app-header">
 
                 <div class="header-page-title">
-                    @isset($heading)
-                        {{ $heading }}
+                    @isset($title)
+                        {{ $title }}
                     @else
                         {{ __('Dashboard') }}
                     @endisset
@@ -391,7 +391,7 @@
                     <div class="header-divider"></div>
 
                     {{-- User dropdown --}}
-                    <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->initials()" />
+                    <x-desktop-user-menu class="hidden lg:block" avatar="{{ auth()->user()->avatar }}" />
                 </div>
             </header>
 
