@@ -4,8 +4,10 @@ use Livewire\Component;
 use Livewire\Attributes\On;
 use App\Livewire\Forms\StoreForm;
 use Illuminate\Validation\ValidationException;
+use Livewire\WithFileUploads;
 
 new class extends Component {
+    use WithFileUploads;
     public StoreForm $form;
 
     public function create()
@@ -83,8 +85,8 @@ new class extends Component {
                                 class="flex items-center gap-1.5 rounded-md border border-stone-100 bg-white px-2.5 py-1.5 shadow-sm dark:border-stone-700 dark:bg-stone-800">
                                 <svg class="h-3.5 w-3.5 animate-spin text-sage-600 dark:text-sage-400" fill="none"
                                     viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                        stroke-width="4"></circle>
+                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                        stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V12H4z"></path>
                                 </svg>
                                 <span class="text-[10px] font-medium text-stone-600 dark:text-stone-300">
@@ -95,10 +97,100 @@ new class extends Component {
 
                         {{-- Grid Form Input --}}
                         <div class="space-y-2.5 pb-4">
+                            {{-- Baris 0: Image Upload dengan Preview --}}
+                            <div>
+                                <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
+                                    {{ __('Avatar Toko') }}
+                                </label>
+
+                                <div x-data="{
+                                    previewUrl: null,
+                                    fileName: '',
+                                    handleFile(e) {
+                                        const file = e.target.files[0];
+                                        if (!file) {
+                                            this.previewUrl = null;
+                                            this.fileName = '';
+                                            return;
+                                        }
+                                        this.fileName = file.name;
+                                        const reader = new FileReader();
+                                        reader.onload = (ev) => { this.previewUrl = ev.target.result; };
+                                        reader.readAsDataURL(file);
+                                    }
+                                }">
+
+                                    {{-- Area Upload — ⭐ seluruh area bisa diklik --}}
+                                    <label x-show="!previewUrl"
+                                        class="flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-stone-200 bg-stone-50 px-3 py-4 text-center transition hover:border-sage-400 hover:bg-stone-100 dark:border-stone-700 dark:bg-stone-800/50 dark:hover:border-sage-600 dark:hover:bg-stone-800">
+                                        <svg class="mb-1.5 h-6 w-6 text-stone-400 dark:text-stone-500" fill="none"
+                                            stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                        </svg>
+
+                                        <span class="text-sage-600 dark:text-sage-400 text-[11px] font-medium">
+                                            {{ __('Klik untuk upload') }}
+                                        </span>
+                                        <p class="mt-1 text-[10px] text-stone-400 dark:text-stone-500">
+                                            {{ __('PNG, JPG, WEBP maks 2MB') }}
+                                        </p>
+
+                                        {{-- ⭐ Input hidden di dalam label — klik di mana saja pada label akan trigger --}}
+                                        <input wire:model="form.image" type="file" accept="image/*"
+                                            class="hidden" x-on:change="handleFile($event)" />
+                                    </label>
+
+                                    {{-- Preview --}}
+                                    <div x-show="previewUrl" x-cloak
+                                        class="relative overflow-hidden rounded-md border border-stone-200 bg-stone-50 p-2 dark:border-stone-700 dark:bg-stone-800">
+                                        <div class="flex items-center gap-2.5">
+                                            <img :src="previewUrl" alt="Preview"
+                                                class="h-16 w-16 rounded-md border border-stone-200 object-cover dark:border-stone-700" />
+                                            <div class="min-w-0 flex-1">
+                                                <p class="truncate text-[11px] font-medium text-stone-700 dark:text-stone-200"
+                                                    x-text="fileName"></p>
+                                                <p class="text-[10px] text-stone-400 dark:text-stone-500">
+                                                    {{ __('Siap diupload') }}
+                                                </p>
+                                            </div>
+                                            <label
+                                                class="cursor-pointer rounded-md p-1.5 text-stone-400 transition hover:bg-stone-100 hover:text-red-600 dark:hover:bg-stone-700 dark:hover:text-red-400"
+                                                title="Ganti gambar">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor"
+                                                    stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+                                                </svg>
+                                                <input wire:model="form.image" type="file" accept="image/*"
+                                                    class="hidden" x-on:change="handleFile($event)" />
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {{-- Loading upload --}}
+                                    <div wire:loading wire:target="form.image"
+                                        class="text-sage-600 dark:text-sage-400 mt-1 flex items-center gap-1.5 text-[10px]">
+                                        <svg class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z">
+                                            </path>
+                                        </svg>
+                                        {{ __('Mengupload...') }}
+                                    </div>
+
+                                    @error('form.image')
+                                        <p class="mt-0.5 text-[10px] text-red-500">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+
                             {{-- Baris 1: Name & Code --}}
                             <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                                 <div>
-                                    <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
+                                    <label
+                                        class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
                                         {{ __('Nama Toko') }}
                                     </label>
                                     <input wire:model="form.name" type="text" required
@@ -109,7 +201,8 @@ new class extends Component {
                                 </div>
 
                                 <div>
-                                    <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
+                                    <label
+                                        class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
                                         {{ __('Kode') }}
                                     </label>
                                     <input wire:model="form.code" type="text" maxlength="8" placeholder="STORE....."

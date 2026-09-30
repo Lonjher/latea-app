@@ -6,7 +6,7 @@ use App\Models\Store;
 
 new #[Title('Manage Stores')] class extends Component {
     public $search;
-    public $filterActive = "";
+    public $filterActive = '';
 
     public function deleteStore(Store $store)
     {
@@ -18,11 +18,12 @@ new #[Title('Manage Stores')] class extends Component {
     {
         $stores = Store::query()
             ->when($this->search, function ($query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
+                $query
+                    ->where('name', 'like', '%' . $this->search . '%')
                     ->orWhere('code', 'like', '%' . $this->search . '%')
                     ->orWhere('location', 'like', '%' . $this->search . '%');
             })
-            ->when($this->filterActive !== "", function ($query) {
+            ->when($this->filterActive !== '', function ($query) {
                 $query->where('is_active', $this->filterActive);
             })
             ->paginate(10);
@@ -60,8 +61,7 @@ new #[Title('Manage Stores')] class extends Component {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
                     </svg>
-                    <input wire:model.live.debounce.300ms="search" type="text"
-                        placeholder="Cari nama atau Kode..."
+                    <input wire:model.live.debounce.300ms="search" type="text" placeholder="Cari nama atau Kode..."
                         class="focus:ring-sage-500 w-full rounded-lg border border-stone-200 bg-stone-50 py-1.5 pl-8 pr-3 text-xs text-stone-800 transition placeholder:text-stone-400 focus:border-transparent focus:outline-none focus:ring-1 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500" />
                 </div>
 
@@ -130,10 +130,17 @@ new #[Title('Manage Stores')] class extends Component {
 
                                 <td class="px-2.5 py-1.5">
                                     <div class="max-w-45 flex items-center gap-2 sm:max-w-xs">
-                                        <div
-                                            class="bg-sage-100 dark:bg-sage-900/60 text-sage-700 dark:text-sage-400 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold uppercase">
-                                            {{ mb_substr($store->name, 0, 2) }}
-                                        </div>
+                                        {{-- ⭐ Avatar: gambar kalau ada, fallback inisial --}}
+                                        @if ($store->image)
+                                            <img src="{{ \Illuminate\Support\Facades\Storage::url($store->image) }}"
+                                                alt="{{ $store->name }}"
+                                                class="h-6 w-6 shrink-0 rounded-full border border-stone-200 object-cover dark:border-stone-700" />
+                                        @else
+                                            <div
+                                                class="bg-sage-100 dark:bg-sage-900/60 text-sage-700 dark:text-sage-400 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[9px] font-bold uppercase">
+                                                {{ mb_substr($store->name, 0, 2) }}
+                                            </div>
+                                        @endif
                                         <div class="truncate">
                                             <div class="truncate font-medium text-stone-800 dark:text-stone-200">
                                                 {{ $store->name }}
@@ -142,7 +149,8 @@ new #[Title('Manage Stores')] class extends Component {
                                     </div>
                                 </td>
 
-                                <td class="px-2.5 py-1.5 font-mono text-[9px] md:text-[10px] text-stone-500 dark:text-stone-400">
+                                <td
+                                    class="px-2.5 py-1.5 font-mono text-[9px] md:text-[10px] text-stone-500 dark:text-stone-400">
                                     {{ $store->code }}
                                 </td>
 
@@ -151,8 +159,7 @@ new #[Title('Manage Stores')] class extends Component {
                                     {{ $store->location }}
                                 </td>
 
-                                <td
-                                    class="px-2.5 py-1.5 font-mono text-stone-500 dark:text-stone-400">
+                                <td class="px-2.5 py-1.5 font-mono text-stone-500 dark:text-stone-400">
                                     {{ $store->products->count() ?? 0 }}
                                 </td>
 
@@ -215,7 +222,9 @@ new #[Title('Manage Stores')] class extends Component {
                                                     <a href="{{ route('admin.stores.products', $store->id) }}"
                                                         @click="open = false"
                                                         class="text-sage-600 dark:text-sage-400 hover:bg-sage-50 dark:hover:bg-sage-950/30 flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs transition-colors">
-                                                        <svg class="text-sage-500 h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <svg class="text-sage-500 h-3.5 w-3.5" fill="none"
+                                                            stroke="currentColor" stroke-width="2"
+                                                            viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                                 d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                                                         </svg>
@@ -266,6 +275,6 @@ new #[Title('Manage Stores')] class extends Component {
         <livewire:admin.stores.add-store />
         <livewire:admin.stores.edit-store />
         <x-modal-hapus modal_name="open-delete-modal" action_hapus="deleteStore" title="Hapus Toko"
-        description="Data toko akan dihapus permanen dari sistem." />
+            description="Data toko akan dihapus permanen dari sistem." />
     </div>
 </div>

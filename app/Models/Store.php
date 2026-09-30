@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property string $name
+ * @property string $image
  * @property string $code
  * @property string $location
  * @property boolean $is_active
