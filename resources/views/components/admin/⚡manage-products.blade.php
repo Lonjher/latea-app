@@ -6,7 +6,7 @@ use App\Models\Product;
 
 new #[Title('Manage Products')] class extends Component {
     public $search;
-    public $filterActive = "";
+    public $filterActive = '';
 
     public function deleteProduct(Product $product)
     {
@@ -18,11 +18,12 @@ new #[Title('Manage Products')] class extends Component {
     {
         $products = Product::query()
             ->when($this->search, function ($query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
+                $query
+                    ->where('name', 'like', '%' . $this->search . '%')
                     ->orWhere('code', 'like', '%' . $this->search . '%')
                     ->orWhere('description', 'like', '%' . $this->search . '%');
             })
-            ->when($this->filterActive !== "", function ($query) {
+            ->when($this->filterActive !== '', function ($query) {
                 $query->where('is_active', $this->filterActive);
             })
             ->latest()
@@ -137,7 +138,8 @@ new #[Title('Manage Products')] class extends Component {
                                             <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}"
                                                 class="h-7 w-7 shrink-0 rounded-md border border-stone-200 object-cover dark:border-stone-700" />
                                         @else
-                                            <div class="bg-sage-100 dark:bg-sage-900/60 text-sage-700 dark:text-sage-400 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[9px] font-bold uppercase">
+                                            <div
+                                                class="bg-sage-100 dark:bg-sage-900/60 text-sage-700 dark:text-sage-400 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[9px] font-bold uppercase">
                                                 {{ mb_substr($product->name, 0, 2) }}
                                             </div>
                                         @endif
@@ -191,37 +193,53 @@ new #[Title('Manage Products')] class extends Component {
 
                                 {{-- Aksi --}}
                                 <td class="px-2.5 py-1.5 text-right">
-                                    <div class="flex items-center justify-end" x-data="{ open: false }">
-                                        <div class="relative inline-block text-left">
+                                    <div class="flex items-center justify-end" x-data="{
+                                        open: false,
+                                        coords: { top: 0, left: 0 },
+                                        toggle() {
+                                            this.open = !this.open;
+                                            if (this.open) {
+                                                this.$nextTick(() => {
+                                                    const rect = this.$refs.trigger.getBoundingClientRect();
+                                                    const menuWidth = 128; // w-32 = 8rem = 128px
+                                                    this.coords = {
+                                                        top: rect.bottom + 4,
+                                                        left: rect.right - menuWidth
+                                                    };
+                                                });
+                                            }
+                                        }
+                                    }">
 
-                                            {{-- Tombol Titik Tiga --}}
-                                            <button @click="open = !open" @click.outside="open = false"
-                                                class="cursor-pointer rounded-md p-1 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 focus:outline-none dark:hover:bg-stone-800 dark:hover:text-stone-200"
-                                                title="Menu Aksi">
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor"
-                                                    stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
-                                                </svg>
-                                            </button>
+                                        {{-- Tombol Titik Tiga --}}
+                                        <button x-ref="trigger" @click="toggle()" @click.outside="open = false"
+                                            class="cursor-pointer rounded-md p-1 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 focus:outline-none dark:hover:bg-stone-800 dark:hover:text-stone-200"
+                                            title="Menu Aksi">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+                                            </svg>
+                                        </button>
 
-                                            {{-- Menu Dropdown Konten --}}
+                                        {{-- Menu Dropdown Konten — teleport ke body --}}
+                                        <template x-teleport="body">
                                             <div x-show="open" x-transition:enter="transition ease-out duration-100"
                                                 x-transition:enter-start="transform opacity-0 scale-95"
                                                 x-transition:enter-end="transform opacity-100 scale-100"
                                                 x-transition:leave="transition ease-in duration-75"
                                                 x-transition:leave-start="transform opacity-100 scale-100"
                                                 x-transition:leave-end="transform opacity-0 scale-95"
-                                                class="absolute right-0 z-30 mt-1 w-32 origin-top-right rounded-md border border-stone-200 bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:border-stone-800 dark:bg-stone-900"
+                                                @click.outside="open = false"
+                                                :style="`position: fixed; top: ${coords.top}px; left: ${coords.left}px; z-index: 9999;`"
+                                                class="w-32 origin-top-right rounded-md border border-stone-200 bg-white shadow-lg ring-1 ring-black/5 focus:outline-none dark:border-stone-800 dark:bg-stone-900"
                                                 style="display: none;">
+
                                                 <div class="space-y-0.5 p-1">
 
                                                     {{-- Edit --}}
-                                                    <button x-data
-                                                        x-on:click="$dispatch('edit-product-modal', {
-                                                                                                productId: {{ $product->id }},
-                                                                                            })"
-                                                        @click="open = false"
+                                                    <button
+                                                        x-on:click="$dispatch('edit-product-modal', { productId: {{ $product->id }} }); open = false"
                                                         class="text-sage-600 dark:text-sage-400 hover:bg-sage-50 dark:hover:bg-sage-950/30 flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs transition-colors">
                                                         <svg class="text-sage-500 h-3.5 w-3.5" fill="none"
                                                             stroke="currentColor" stroke-width="2"
@@ -235,9 +253,8 @@ new #[Title('Manage Products')] class extends Component {
                                                     <flux:separator />
 
                                                     {{-- Hapus --}}
-                                                    <button x-data
-                                                        x-on:click="$dispatch('open-delete-modal', { id: {{ $product->id }} })"
-                                                        @click="open = false"
+                                                    <button
+                                                        x-on:click="$dispatch('open-delete-modal', { id: {{ $product->id }} }); open = false"
                                                         class="flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40">
                                                         <svg class="h-3.5 w-3.5 text-red-400" fill="none"
                                                             stroke="currentColor" stroke-width="2"
@@ -250,8 +267,7 @@ new #[Title('Manage Products')] class extends Component {
 
                                                 </div>
                                             </div>
-
-                                        </div>
+                                        </template>
                                     </div>
                                 </td>
                             </tr>

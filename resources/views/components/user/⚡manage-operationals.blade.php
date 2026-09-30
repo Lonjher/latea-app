@@ -10,11 +10,17 @@ new #[Title('Biaya Operasional')] class extends Component {
     use WithPagination;
 
     public $dateFrom = '';
-    public $dateTo   = '';
+    public $dateTo = '';
 
     // ⭐ Reset pagination saat filter berubah
-    public function updatedDateFrom() { $this->resetPage(); }
-    public function updatedDateTo()   { $this->resetPage(); }
+    public function updatedDateFrom()
+    {
+        $this->resetPage();
+    }
+    public function updatedDateTo()
+    {
+        $this->resetPage();
+    }
 
     // ⭐ Hapus operational — GUARD: hanya store sendiri
     public function deleteOperational($id): void
@@ -53,16 +59,12 @@ new #[Title('Biaya Operasional')] class extends Component {
             ->paginate(15);
 
         // ⭐ Ringkasan total cost periode yang ditampilkan
-        $totalCost = OperationalCost::query()
-            ->where('store_id', $storeId)
-            ->when($this->dateFrom, fn ($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
-            ->when($this->dateTo, fn ($q) => $q->whereDate('created_at', '<=', $this->dateTo))
-            ->sum('cost');
+        $totalCost = OperationalCost::query()->where('store_id', $storeId)->when($this->dateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->dateFrom))->when($this->dateTo, fn($q) => $q->whereDate('created_at', '<=', $this->dateTo))->sum('cost');
 
         return $this->view([
-            'store'         => $user->store,
-            'operationals'  => $operationals,
-            'totalCost'     => (float) $totalCost,
+            'store' => $user->store,
+            'operationals' => $operationals,
+            'totalCost' => (float) $totalCost,
         ]);
     }
 };
@@ -75,7 +77,8 @@ new #[Title('Biaya Operasional')] class extends Component {
 
         {{-- ── FLASH MESSAGE ── --}}
         @if (session('success'))
-            <div class="bg-sage-50 dark:bg-sage-950 border-sage-200 dark:border-sage-800 text-sage-700 dark:text-sage-300 flex items-center gap-2.5 rounded-xl border px-3 py-2 text-xs">
+            <div
+                class="bg-sage-50 dark:bg-sage-950 border-sage-200 dark:border-sage-800 text-sage-700 dark:text-sage-300 flex items-center gap-2.5 rounded-xl border px-3 py-2 text-xs">
                 <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
@@ -84,9 +87,11 @@ new #[Title('Biaya Operasional')] class extends Component {
         @endif
 
         @if (session('error'))
-            <div class="flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
+            <div
+                class="flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
                 <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M4.293 4.293A1 1 0 005.707 5.707L18.293 18.293a1 1 0 001.414-1.414L7.121 4.293A1 1 0 004.293 4.293z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01M4.293 4.293A1 1 0 005.707 5.707L18.293 18.293a1 1 0 001.414-1.414L7.121 4.293A1 1 0 004.293 4.293z" />
                 </svg>
                 {{ session('error') }}
             </div>
@@ -111,7 +116,8 @@ new #[Title('Biaya Operasional')] class extends Component {
                 </div>
 
                 {{-- Total Cost Pill --}}
-                <div class="rounded-lg border border-stone-200 bg-stone-50 px-3 py-1.5 dark:border-stone-700 dark:bg-stone-800/50">
+                <div
+                    class="rounded-lg border border-stone-200 bg-stone-50 px-3 py-1.5 dark:border-stone-700 dark:bg-stone-800/50">
                     <p class="text-[9px] uppercase tracking-wider text-stone-500 dark:text-stone-400">
                         Total Biaya (periode ini)
                     </p>
@@ -152,7 +158,8 @@ new #[Title('Biaya Operasional')] class extends Component {
         </div>
     </div>
 
-    <div class="mt-2 overflow-hidden rounded-xl border border-stone-200 bg-white px-4 dark:border-stone-800 dark:bg-stone-900">
+    <div
+        class="mt-2 overflow-hidden rounded-xl border border-stone-200 bg-white px-4 dark:border-stone-800 dark:bg-stone-900">
 
         {{-- Table meta --}}
         <div class="flex items-center justify-between border-b border-stone-100 py-2 dark:border-stone-800">
@@ -161,7 +168,8 @@ new #[Title('Biaya Operasional')] class extends Component {
             </span>
             <div wire:loading class="text-sage-600 dark:text-sage-400 flex items-center gap-1 text-[11px]">
                 <svg class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                        stroke-width="4" />
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                 </svg>
                 {{ __('Memuat…') }}
@@ -170,15 +178,12 @@ new #[Title('Biaya Operasional')] class extends Component {
 
         {{-- Table --}}
         <div class="overflow-x-auto rounded-xl border bg-white shadow-sm dark:border-stone-800 dark:bg-stone-900">
-            <table
-                x-data
-                @operational-added.window="$wire.$refresh()"
-                @operational-updated.window="$wire.$refresh()"
-                @operational-deleted.window="$wire.$refresh()"
-                class="w-full border-collapse text-left text-[11px]">
+            <table x-data @operational-added.window="$wire.$refresh()" @operational-updated.window="$wire.$refresh()"
+                @operational-deleted.window="$wire.$refresh()" class="w-full border-collapse text-left text-[11px]">
 
                 <thead>
-                    <tr class="border-b border-stone-200 bg-stone-50 font-semibold uppercase tracking-wider text-stone-500 dark:border-stone-800 dark:bg-stone-800/50 dark:text-stone-400">
+                    <tr
+                        class="border-b border-stone-200 bg-stone-50 font-semibold uppercase tracking-wider text-stone-500 dark:border-stone-800 dark:bg-stone-800/50 dark:text-stone-400">
                         <th class="w-6 px-2.5 py-1.5 text-center">#</th>
                         <th class="px-2.5 py-1.5">{{ __('Operasional') }}</th>
                         <th class="hidden px-2.5 py-1.5 sm:table-cell">{{ __('Tanggal') }}</th>
@@ -209,59 +214,78 @@ new #[Title('Biaya Operasional')] class extends Component {
                             </td>
 
                             {{-- Cost --}}
-                            <td class="px-2.5 py-1.5 text-right font-mono font-semibold text-stone-700 dark:text-stone-200">
+                            <td
+                                class="px-2.5 py-1.5 text-right font-mono font-semibold text-stone-700 dark:text-stone-200">
                                 Rp {{ number_format($operational->cost, 0, ',', '.') }}
                             </td>
 
                             {{-- Aksi --}}
                             <td class="px-2.5 py-1.5 text-right">
-                                <div class="flex items-center justify-end" x-data="{ open: false }">
-                                    <div class="relative inline-block text-left">
+                                <div class="flex items-center justify-end" x-data="{
+                                    open: false,
+                                    coords: { top: 0, left: 0 },
+                                    toggle() {
+                                        this.open = !this.open;
+                                        if (this.open) {
+                                            this.$nextTick(() => {
+                                                const rect = this.$refs.trigger.getBoundingClientRect();
+                                                const menuWidth = 128; // w-32 = 8rem = 128px
+                                                this.coords = {
+                                                    top: rect.bottom + 4,
+                                                    left: rect.right - menuWidth
+                                                };
+                                            });
+                                        }
+                                    }
+                                }">
 
-                                        {{-- Tombol Titik Tiga --}}
-                                        <button @click="open = !open" @click.outside="open = false"
-                                            class="cursor-pointer rounded-md p-1 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 focus:outline-none dark:hover:bg-stone-800 dark:hover:text-stone-200"
-                                            title="Menu Aksi">
-                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
-                                            </svg>
-                                        </button>
+                                    {{-- Tombol Titik Tiga --}}
+                                    <button x-ref="trigger" @click="toggle()" @click.outside="open = false"
+                                        class="cursor-pointer rounded-md p-1 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 focus:outline-none dark:hover:bg-stone-800 dark:hover:text-stone-200"
+                                        title="Menu Aksi">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+                                        </svg>
+                                    </button>
 
-                                        {{-- Menu Dropdown --}}
+                                    {{-- Menu Dropdown — teleport ke body --}}
+                                    <template x-teleport="body">
                                         <div x-show="open" x-transition:enter="transition ease-out duration-100"
                                             x-transition:enter-start="transform opacity-0 scale-95"
                                             x-transition:enter-end="transform opacity-100 scale-100"
                                             x-transition:leave="transition ease-in duration-75"
                                             x-transition:leave-start="transform opacity-100 scale-100"
                                             x-transition:leave-end="transform opacity-0 scale-95"
-                                            class="absolute right-0 z-30 mt-1 w-32 origin-top-right rounded-md border border-stone-200 bg-white shadow-lg ring-1 ring-black/5 focus:outline-none dark:border-stone-800 dark:bg-stone-900"
+                                            @click.outside="open = false"
+                                            :style="`position: fixed; top: ${coords.top}px; left: ${coords.left}px; z-index: 9999;`"
+                                            class="w-32 origin-top-right rounded-md border border-stone-200 bg-white shadow-lg ring-1 ring-black/5 focus:outline-none dark:border-stone-800 dark:bg-stone-900"
                                             style="display: none;">
 
                                             <div class="space-y-0.5 p-1">
 
                                                 {{-- Edit --}}
-                                                <button x-data
-                                                    x-on:click="$dispatch('edit-operational-modal', {
-                                                        operationalId: {{ $operational->id }}
-                                                    })"
-                                                    @click="open = false"
+                                                <button
+                                                    x-on:click="$dispatch('edit-operational-modal', { operationalId: {{ $operational->id }} }); open = false"
                                                     class="text-sage-600 dark:text-sage-400 hover:bg-sage-50 dark:hover:bg-sage-950/30 flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs transition-colors">
-                                                    <svg class="text-sage-500 h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <svg class="text-sage-500 h-3.5 w-3.5" fill="none"
+                                                        stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                                                     </svg>
                                                     Edit
                                                 </button>
 
-                                                <div class="my-0.5 border-t border-stone-100 dark:border-stone-800"></div>
+                                                <div class="my-0.5 border-t border-stone-100 dark:border-stone-800">
+                                                </div>
 
                                                 {{-- Hapus --}}
-                                                <button x-data
-                                                    x-on:click="$dispatch('open-delete-modal', { id: {{ $operational->id }} })"
-                                                    @click="open = false"
+                                                <button
+                                                    x-on:click="$dispatch('open-delete-modal', { id: {{ $operational->id }} }); open = false"
                                                     class="flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40">
-                                                    <svg class="h-3.5 w-3.5 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <svg class="h-3.5 w-3.5 text-red-400" fill="none"
+                                                        stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                                                     </svg>
@@ -270,8 +294,7 @@ new #[Title('Biaya Operasional')] class extends Component {
 
                                             </div>
                                         </div>
-
-                                    </div>
+                                    </template>
                                 </div>
                             </td>
                         </tr>
@@ -305,9 +328,6 @@ new #[Title('Biaya Operasional')] class extends Component {
     <livewire:user.operationals.add-operational />
     <livewire:user.operationals.edit-operational />
 
-    <x-modal-hapus
-        modal_name="open-delete-modal"
-        action_hapus="deleteOperational"
-        title="Hapus Operational"
+    <x-modal-hapus modal_name="open-delete-modal" action_hapus="deleteOperational" title="Hapus Operational"
         description="Data operational akan dihapus permanen dari sistem." />
 </div>
