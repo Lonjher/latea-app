@@ -101,23 +101,21 @@ new class extends Component {
 
                         {{-- Grid Form Input --}}
                         <div class="space-y-2.5 pb-4">
-                            <div class="grid grid-cols-1">
-                                <div>
-                                    <label
-                                        class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                        {{ __('Store') }}
-                                    </label>
-                                    <select wire:model="form.store_id"
-                                        class="focus:ring-sage-500 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 transition focus:outline-none focus:ring-1 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300">
-                                        <option value="">Select Store</option>
-                                        @foreach ($stores as $store)
-                                            <option value="{{ $store->id }}">{{ $store->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('form.store_id')
-                                        <p class="mt-0.5 text-[10px] text-red-500">{{ $message }}</p>
-                                    @enderror
-                                </div>
+                            <div class="w-full">
+                                <label
+                                    class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
+                                    {{ __('Toko') }}
+                                </label>
+                                <select wire:model="form.store_id"
+                                    class="w-full focus:ring-sage-500 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 transition focus:outline-none focus:ring-1 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300">
+                                    <option value="">Pilih Toko</option>
+                                    @foreach ($stores as $store)
+                                        <option value="{{ $store->id }}">{{ $store->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('form.store_id')
+                                    <p class="mt-0.5 text-[10px] text-red-500">{{ $message }}</p>
+                                @enderror
                             </div>
 
                             {{-- Operational --}}
@@ -125,9 +123,9 @@ new class extends Component {
                                 <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
                                     {{ __('Kegiatan') }}
                                 </label>
-                                <textarea wire:model="form.operational" rows="3" required placeholder="Deskripsi produk..."
+                                <textarea wire:model="form.operational_name" rows="3" required placeholder="Deskripsi produk..."
                                     class="w-full resize-none rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100"></textarea>
-                                @error('form.operational')
+                                @error('form.operational_name')
                                     <p class="mt-0.5 text-[10px] text-red-500">{{ $message }}</p>
                                 @enderror
                             </div>

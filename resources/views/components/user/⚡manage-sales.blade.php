@@ -3,27 +3,25 @@
 use Livewire\Component;
 use Livewire\Attributes\Title;
 use App\Models\Sale;
-use App\Models\Store;
+use Illuminate\Support\Facades\Auth;
 
-new #[Title('Manage Sales')] class extends Component {
+new #[Title('Sale History')] class extends Component {
     public $search;
-    public $filterStore = '';
     public $filterStatus = '';
     public $dateFrom = '';
     public $dateTo = '';
 
     public function with()
     {
-        // Query dasar dengan filter (untuk data yang ditampilkan)
+        $user = Auth::user();
+        $storeId = $user->store_id;
+
+        // ⭐ Query dasar — LOCK ke kasir yang login
         $sales = Sale::query()
             ->with(['store', 'items'])
+            ->where('cashier_id', $user->id)
             ->when($this->search, function ($query) {
-                $query->where(function ($q) {
-                    $q->where('invoice_number', 'like', '%' . $this->search . '%')->orWhere('cashier_name', 'like', '%' . $this->search . '%');
-                });
-            })
-            ->when($this->filterStore !== '', function ($query) {
-                $query->where('store_id', $this->filterStore);
+                $query->where('invoice_number', 'like', '%' . $this->search . '%');
             })
             ->when($this->filterStatus !== '', function ($query) {
                 $query->where('status', $this->filterStatus);
@@ -36,37 +34,76 @@ new #[Title('Manage Sales')] class extends Component {
             })
             ->orderByDesc('sale_date')
             ->take(15)
-            ->get(); // ← get, bukan paginate
+            ->get();
 
-        // Summary dihitung dari SELURUH data (tanpa filter & tanpa take)
+        // ⭐ Summary personal — seluruh data kasir (tanpa filter)
+        $baseQuery = Sale::where('cashier_id', $user->id);
+
         $summary = [
-            'total_transactions' => Sale::count(),
-            'total_revenue' => Sale::where('status', 'completed')->sum('total'),
-            'today_transactions' => Sale::whereDate('sale_date', today())->count(),
-            'today_revenue' => Sale::whereDate('sale_date', today())->where('status', 'completed')->sum('total'),
+            'total_transactions' => (clone $baseQuery)->count(),
+            'total_revenue' => (clone $baseQuery)->where('status', 'completed')->sum('total'),
+            'today_transactions' => (clone $baseQuery)->whereDate('sale_date', today())->count(),
+            'today_revenue' => (clone $baseQuery)->whereDate('sale_date', today())->where('status', 'completed')->sum('total'),
         ];
 
         return [
+            'user' => $user,
+            'store' => $user->store,
             'sales' => $sales,
-            'stores' => Store::orderBy('name')->get(),
             'summary' => $summary,
-            'isFiltered' => $this->search || $this->filterStore || $this->filterStatus || $this->dateFrom || $this->dateTo,
+            'isFiltered' => $this->search || $this->filterStatus || $this->dateFrom || $this->dateTo,
         ];
     }
 };
 ?>
 
 <div>
-    <x-page-header title="Riwayat Penjualan" leading="Riwayat semua transaksi penjualan" />
+    <x-page-header title="Riwayat Penjualan" leading="Daftar transaksi yang Anda buat" :time="true" />
 
     <div class="mx-auto mt-2 max-w-7xl space-y-2">
 
-        {{-- SUMMARY CARDS --}}
+        {{-- ⭐ INFO STORE --}}
+        @if ($store)
+            <div class="rounded-xl border border-stone-200 bg-white px-3 py-3 dark:border-stone-800 dark:bg-stone-900">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="bg-sage-100 dark:bg-sage-900/60 text-sage-700 dark:text-sage-400 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold uppercase">
+                            {{ mb_substr($store->name, 0, 2) }}
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-stone-800 dark:text-stone-100">
+                                {{ $store->name }}
+                            </p>
+                            <p class="text-[10px] text-stone-500 dark:text-stone-400">
+                                {{ $store->code }} · {{ $store->location }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <div
+                            class="rounded-lg border border-stone-200 bg-stone-50 px-3 py-1.5 dark:border-stone-700 dark:bg-stone-800/50">
+                            <p class="text-[9px] uppercase tracking-wider text-stone-500 dark:text-stone-400">
+                                {{ __('Kasir') }}
+                            </p>
+                            <p class="text-[11px] font-semibold text-stone-800 dark:text-stone-100">
+                                {{ $user->name }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        {{-- ════════════════════════════════════════════════ --}}
+        {{-- SUMMARY CARDS (Personal)                       --}}
+        {{-- ════════════════════════════════════════════════ --}}
         <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {{-- Total Transaksi --}}
             <div class="rounded-xl border border-stone-200 bg-white p-3 dark:border-stone-800 dark:bg-stone-900">
                 <p class="text-[10px] font-medium uppercase tracking-wider text-stone-500 dark:text-stone-400">
-                    {{ __('Total Transaksi') }}
+                    {{ __('Transaksi Saya') }}
                 </p>
                 <p class="mt-0.5 font-mono text-lg font-semibold text-stone-800 dark:text-stone-100">
                     {{ number_format($summary['total_transactions'], 0, ',', '.') }}
@@ -76,7 +113,7 @@ new #[Title('Manage Sales')] class extends Component {
             {{-- Total Revenue --}}
             <div class="rounded-xl border border-stone-200 bg-white p-3 dark:border-stone-800 dark:bg-stone-900">
                 <p class="text-[10px] font-medium uppercase tracking-wider text-stone-500 dark:text-stone-400">
-                    {{ __('Total Pendapatan') }}
+                    {{ __('Pendapatan Saya') }}
                 </p>
                 <p class="mt-0.5 font-mono text-lg font-semibold text-sage-700 dark:text-sage-400">
                     Rp {{ number_format($summary['total_revenue'], 0, ',', '.') }}
@@ -86,7 +123,7 @@ new #[Title('Manage Sales')] class extends Component {
             {{-- Transaksi Hari Ini --}}
             <div class="rounded-xl border border-stone-200 bg-white p-3 dark:border-stone-800 dark:bg-stone-900">
                 <p class="text-[10px] font-medium uppercase tracking-wider text-stone-500 dark:text-stone-400">
-                    {{ __('Transaksi Hari Ini') }}
+                    {{ __('Hari Ini') }}
                 </p>
                 <p class="mt-0.5 font-mono text-lg font-semibold text-blue-600 dark:text-blue-400">
                     {{ number_format($summary['today_transactions'], 0, ',', '.') }}
@@ -104,7 +141,9 @@ new #[Title('Manage Sales')] class extends Component {
             </div>
         </div>
 
-        {{-- FILTER BAR --}}
+        {{-- ════════════════════════════════════════════════ --}}
+        {{-- FILTER BAR                                     --}}
+        {{-- ════════════════════════════════════════════════ --}}
         <div class="rounded-xl border border-stone-200 bg-white px-3 py-3 dark:border-stone-800 dark:bg-stone-900">
             <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
 
@@ -115,19 +154,9 @@ new #[Title('Manage Sales')] class extends Component {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
                     </svg>
-                    <input wire:model.live.debounce.300ms="search" type="text"
-                        placeholder="Cari invoice atau nama kasir…"
+                    <input wire:model.live.debounce.300ms="search" type="text" placeholder="Cari nomor invoice…"
                         class="focus:ring-sage-500 w-full rounded-lg border border-stone-200 bg-stone-50 py-1.5 pl-8 pr-3 text-xs text-stone-800 transition placeholder:text-stone-400 focus:border-transparent focus:outline-none focus:ring-1 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100" />
                 </div>
-
-                {{-- Filter Store --}}
-                <select wire:model.live="filterStore"
-                    class="focus:ring-sage-500 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 transition focus:outline-none focus:ring-1 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300">
-                    <option value="">Semua Toko</option>
-                    @foreach ($stores as $store)
-                        <option value="{{ $store->id }}">{{ $store->name }}</option>
-                    @endforeach
-                </select>
 
                 {{-- Filter Status --}}
                 <select wire:model.live="filterStatus"
@@ -146,9 +175,9 @@ new #[Title('Manage Sales')] class extends Component {
                     class="focus:ring-sage-500 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 transition focus:outline-none focus:ring-1 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300" />
 
                 {{-- Reset --}}
-                @if ($search || $filterStore || $filterStatus || $dateFrom || $dateTo)
+                @if ($search || $filterStatus || $dateFrom || $dateTo)
                     <button
-                        wire:click="$set('search', ''); $set('filterStore', ''); $set('filterStatus', ''); $set('dateFrom', ''); $set('dateTo', '')"
+                        wire:click="$set('search', ''); $set('filterStatus', ''); $set('dateFrom', ''); $set('dateTo', '')"
                         class="rounded-lg border border-stone-200 px-2.5 py-1.5 text-xs font-medium text-stone-600 transition hover:bg-stone-50 dark:border-stone-700 dark:text-stone-400 dark:hover:bg-stone-800">
                         {{ __('Reset') }}
                     </button>
@@ -156,7 +185,9 @@ new #[Title('Manage Sales')] class extends Component {
             </div>
         </div>
 
-        {{-- TABLE CARD --}}
+        {{-- ════════════════════════════════════════════════ --}}
+        {{-- TABLE CARD                                     --}}
+        {{-- ════════════════════════════════════════════════ --}}
         <div
             class="overflow-hidden rounded-xl border border-stone-200 bg-white px-4 dark:border-stone-800 dark:bg-stone-900">
 
@@ -187,8 +218,6 @@ new #[Title('Manage Sales')] class extends Component {
                             <th class="w-6 px-2.5 py-1.5 text-center">#</th>
                             <th class="px-2.5 py-1.5">{{ __('Invoice') }}</th>
                             <th class="hidden px-2.5 py-1.5 sm:table-cell">{{ __('Tanggal') }}</th>
-                            <th class="hidden px-2.5 py-1.5 md:table-cell">{{ __('Kasir') }}</th>
-                            <th class="hidden px-2.5 py-1.5 lg:table-cell">{{ __('Toko') }}</th>
                             <th class="hidden w-16 px-2.5 py-1.5 text-center md:table-cell">{{ __('Item') }}</th>
                             <th class="px-2.5 py-1.5 text-right">{{ __('Total') }}</th>
                             <th class="hidden w-20 px-2.5 py-1.5 text-center sm:table-cell">{{ __('Status') }}</th>
@@ -212,16 +241,6 @@ new #[Title('Manage Sales')] class extends Component {
                                 {{-- Tanggal --}}
                                 <td class="hidden px-2.5 py-1.5 text-stone-500 sm:table-cell dark:text-stone-400">
                                     {{ $sale->sale_date->format('d M Y, H:i') }}
-                                </td>
-
-                                {{-- Kasir --}}
-                                <td class="hidden px-2.5 py-1.5 text-stone-500 md:table-cell dark:text-stone-400">
-                                    {{ $sale->cashier_name }}
-                                </td>
-
-                                {{-- Store --}}
-                                <td class="hidden px-2.5 py-1.5 text-stone-500 lg:table-cell dark:text-stone-400">
-                                    {{ $sale->store?->name ?? '—' }}
                                 </td>
 
                                 {{-- Item Count --}}
@@ -318,14 +337,17 @@ new #[Title('Manage Sales')] class extends Component {
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="px-2.5 py-10 text-center">
+                                <td colspan="7" class="px-2.5 py-10 text-center">
                                     <div class="flex flex-col items-center gap-1.5 text-stone-400">
                                         <svg class="h-8 w-8 text-stone-300 dark:text-stone-600" fill="none"
                                             stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
-                                        <p class="text-xs font-medium">{{ __('Tidak ada transaksi ditemukan') }}</p>
+                                        <p class="text-xs font-medium">{{ __('Belum ada transaksi') }}</p>
+                                        <p class="text-[10px] text-stone-400 dark:text-stone-500">
+                                            {{ __('Transaksi yang Anda buat akan muncul di sini') }}
+                                        </p>
                                     </div>
                                 </td>
                             </tr>
@@ -333,8 +355,9 @@ new #[Title('Manage Sales')] class extends Component {
                     </tbody>
                 </table>
             </div>
-
         </div>
     </div>
-    <livewire:admin.sales.detail-sale />
+
+    {{-- Modal detail sale --}}
+    <livewire:user.sales.detail-sale />
 </div>

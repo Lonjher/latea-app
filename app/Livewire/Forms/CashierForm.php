@@ -3,9 +3,11 @@
 namespace App\Livewire\Forms;
 
 use Illuminate\Validation\Rule;
-use Livewire\Form;
-use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Form;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use App\Models\User;
 
 class CashierForm extends Form
 {
@@ -17,6 +19,10 @@ class CashierForm extends Form
     public $password_confirmation;
     public $store_id;
     public $is_active = true;
+
+    // === Avatar ===
+    public ?TemporaryUploadedFile $avatar = null;
+    public ?string $existingAvatarUrl = null;
 
     public function rules(): array
     {
@@ -31,6 +37,9 @@ class CashierForm extends Form
                 : ['required', 'string', 'min:8', 'confirmed'],
             'store_id' => ['required', 'exists:stores,id'],
             'is_active' => ['boolean'],
+
+            // === Avatar rules ===
+            'avatar' => ['nullable', 'image', 'max:2048'], // maks 2MB
         ];
     }
 
@@ -52,6 +61,9 @@ class CashierForm extends Form
             'store_id.exists' => 'Store tidak valid.',
 
             'is_active.boolean' => 'Status aktif harus berupa boolean.',
+
+            'avatar.image' => 'File harus berupa gambar.',
+            'avatar.max' => 'Ukuran gambar maksimal 2MB.',
         ];
     }
 
@@ -64,13 +76,18 @@ class CashierForm extends Form
         $this->password_confirmation = null;
         $this->store_id = $cashier->store_id;
         $this->is_active = (bool) $cashier->is_active;
+
+        $this->avatar = null;
+        $this->existingAvatarUrl = $cashier->avatar
+            ? asset('storage/' . $cashier->avatar)
+            : null;
     }
 
     public function create()
     {
         $this->validate();
 
-        User::create([
+        $data = [
             'name' => $this->name,
             'email' => $this->email,
             'password' => Hash::make($this->password),
@@ -78,7 +95,14 @@ class CashierForm extends Form
             'store_id' => $this->store_id,
             'is_active' => $this->is_active,
             'email_verified_at' => now(),
-        ]);
+        ];
+
+        // Simpan avatar kalau ada
+        if ($this->avatar) {
+            $data['avatar'] = $this->avatar->store('avatars', 'public');
+        }
+
+        User::create($data);
 
         return $this->reset();
     }
@@ -97,6 +121,16 @@ class CashierForm extends Form
         // Hanya update password kalau diisi
         if ($this->password) {
             $data['password'] = Hash::make($this->password);
+        }
+
+        // Handle avatar baru
+        if ($this->avatar) {
+            // Hapus file lama
+            if ($this->cashier->avatar && Storage::disk('public')->exists($this->cashier->avatar)) {
+                Storage::disk('public')->delete($this->cashier->avatar);
+            }
+
+            $data['avatar'] = $this->avatar->store('avatars', 'public');
         }
 
         $this->cashier->update($data);

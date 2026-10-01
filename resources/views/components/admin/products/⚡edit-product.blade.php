@@ -104,10 +104,10 @@ new class extends Component {
                 <div class="flex-shrink-0 space-y-3 p-4 pb-3">
                     <div>
                         <h3 class="text-sm font-semibold text-stone-800 dark:text-stone-100">
-                            {{ __('Update Product') }}
+                            {{ __('Update Produk') }}
                         </h3>
                         <p class="mt-0.5 text-[11px] leading-normal text-stone-500 dark:text-stone-400">
-                            {{ __('Update detail product yang sudah ada.') }}
+                            {{ __('Update detail produk yang sudah ada.') }}
                         </p>
                     </div>
                     <div class="border-t border-stone-100 dark:border-stone-800"></div>
@@ -128,7 +128,7 @@ new class extends Component {
                         <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                             <div>
                                 <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                    {{ __('Code') }}
+                                    {{ __('Kode') }}
                                 </label>
                                 <input wire:model="form.code" type="text" maxlength="255" placeholder="PROD-001"
                                     required
@@ -140,7 +140,7 @@ new class extends Component {
 
                             <div>
                                 <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                    {{ __('Product Name') }}
+                                    {{ __('Nama Produk') }}
                                 </label>
                                 <input wire:model="form.name" type="text" required
                                     class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100" />
@@ -153,7 +153,7 @@ new class extends Component {
                         {{-- Baris 2: Description --}}
                         <div>
                             <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                {{ __('Description') }}
+                                {{ __('Deskripsi') }}
                             </label>
                             <textarea wire:model="form.description" rows="3" required placeholder="Deskripsi produk..."
                                 class="w-full resize-none rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100"></textarea>
@@ -165,7 +165,7 @@ new class extends Component {
                         {{-- Baris 3: Image Upload dengan Preview (existing + new) --}}
                         <div>
                             <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                {{ __('Product Image') }}
+                                {{ __('Gambar Produk') }}
                             </label>
 
                             <div x-data="{
@@ -348,7 +348,7 @@ new class extends Component {
                                 <div class="flex flex-col">
                                     <span
                                         class="text-[11px] font-medium {{ $form->is_active ? 'text-sage-700 dark:text-sage-400' : 'text-stone-500 dark:text-stone-400' }}">
-                                        {{ $form->is_active ? __('Active') : __('Inactive') }}
+                                        {{ $form->is_active ? __('Aktif') : __('Non Aktif') }}
                                     </span>
                                     <span class="text-[10px] text-stone-400 dark:text-stone-500">
                                         {{ $form->is_active ? __('Produk tampil di katalog.') : __('Produk disembunyikan.') }}

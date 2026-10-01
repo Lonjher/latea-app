@@ -6,8 +6,8 @@ use App\Models\User;
 
 new #[Title('Manage Cashiers')] class extends Component {
     public $search;
-    public $filterActive = "";
-    public $filterStore = "";
+    public $filterActive = '';
+    public $filterStore = '';
 
     public function deleteCashier(User $cashier)
     {
@@ -21,17 +21,16 @@ new #[Title('Manage Cashiers')] class extends Component {
             ->with(['store', 'role'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%')
-                      ->orWhere('email', 'like', '%' . $this->search . '%');
+                    $q->where('name', 'like', '%' . $this->search . '%')->orWhere('email', 'like', '%' . $this->search . '%');
                 });
             })
-            ->when($this->filterActive !== "", function ($query) {
+            ->when($this->filterActive !== '', function ($query) {
                 $query->where('is_active', $this->filterActive);
             })
-            ->when($this->filterStore !== "", function ($query) {
+            ->when($this->filterStore !== '', function ($query) {
                 $query->where('store_id', $this->filterStore);
             })
-            ->when($this->filterStore === "", function ($query) {
+            ->when($this->filterStore === '', function ($query) {
                 // Hanya tampilkan user dengan store_id (kasir di toko)
                 // Hapus baris ini kalau kasir boleh tanpa toko
                 $query->whereNotNull('store_id');
@@ -48,7 +47,7 @@ new #[Title('Manage Cashiers')] class extends Component {
 ?>
 
 <div>
-    <x-page-header title="Manage Cashiers" leading="Manage your cashiers" />
+    <x-page-header title="Kelola Akun" leading="Kelola Akun Kasir Anda" />
 
     <div class="mx-auto mt-2 max-w-7xl space-y-2">
 
@@ -74,15 +73,14 @@ new #[Title('Manage Cashiers')] class extends Component {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
                     </svg>
-                    <input wire:model.live.debounce.300ms="search" type="text"
-                        placeholder="Cari nama atau email…"
+                    <input wire:model.live.debounce.300ms="search" type="text" placeholder="Cari nama atau email…"
                         class="focus:ring-sage-500 w-full rounded-lg border border-stone-200 bg-stone-50 py-1.5 pl-8 pr-3 text-xs text-stone-800 transition placeholder:text-stone-400 focus:border-transparent focus:outline-none focus:ring-1 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500" />
                 </div>
 
                 {{-- Filter Store --}}
                 <select wire:model.live="filterStore"
                     class="focus:ring-sage-500 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 transition focus:outline-none focus:ring-1 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300">
-                    <option value="">Semua Store</option>
+                    <option value="">Semua Toko</option>
                     @foreach ($stores as $store)
                         <option value="{{ $store->id }}">{{ $store->name }}</option>
                     @endforeach
@@ -91,9 +89,9 @@ new #[Title('Manage Cashiers')] class extends Component {
                 {{-- Filter Active --}}
                 <select wire:model.live="filterActive"
                     class="focus:ring-sage-500 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 transition focus:outline-none focus:ring-1 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300">
-                    <option value="">All Status</option>
-                    <option value="1">Active</option>
-                    <option value="0">Inactive</option>
+                    <option value="">Semua Status</option>
+                    <option value="1">Aktif</option>
+                    <option value="0">Non Aktif</option>
                 </select>
 
                 <a x-data x-on:click="$dispatch('add-cashier-modal')"
@@ -101,7 +99,7 @@ new #[Title('Manage Cashiers')] class extends Component {
                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    Add Cashier
+                    Tambah
                 </a>
 
             </div>
@@ -114,7 +112,7 @@ new #[Title('Manage Cashiers')] class extends Component {
             {{-- Table meta --}}
             <div class="flex items-center justify-between border-b border-stone-100 py-2 dark:border-stone-800">
                 <span class="font-mono text-[10px] uppercase tracking-wider text-stone-400 dark:text-stone-500">
-                    {{ $cashiers->total() }} {{ __('cashiers found') }}
+                    {{ $cashiers->total() }} {{ __('akun ditemukan') }}
                 </span>
                 <div wire:loading class="text-sage-600 dark:text-sage-400 flex items-center gap-1 text-[11px]">
                     <svg class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -134,9 +132,9 @@ new #[Title('Manage Cashiers')] class extends Component {
                         <tr
                             class="border-b border-stone-200 bg-stone-50 font-semibold uppercase tracking-wider text-stone-500 dark:border-stone-800 dark:bg-stone-800/50 dark:text-stone-400">
                             <th class="w-6 px-2.5 py-1.5 text-center">#</th>
-                            <th class="px-2.5 py-1.5">{{ __('Cashier') }}</th>
-                            <th class="px-2.5 py-1.5">{{ __('Store') }}</th>
-                            <th class="w-20 px-2.5 py-1.5 text-center">{{ __('Active') }}</th>
+                            <th class="px-2.5 py-1.5">{{ __('Akun') }}</th>
+                            <th class="px-2.5 py-1.5">{{ __('Toko') }}</th>
+                            <th class="w-20 px-2.5 py-1.5 text-center">{{ __('Aktif') }}</th>
                             <th class="w-20 px-2.5 py-1.5 text-right">{{ __('Aksi') }}</th>
                         </tr>
                     </thead>
@@ -151,11 +149,18 @@ new #[Title('Manage Cashiers')] class extends Component {
 
                                 {{-- Cashier --}}
                                 <td class="px-2.5 py-1.5">
-                                    <div class="max-w-30 flex items-center gap-2 sm:max-w-xs">
-                                        <div
-                                            class="bg-sage-100 dark:bg-sage-900/60 text-sage-700 dark:text-sage-400 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold uppercase">
-                                            {{ mb_substr($cashier->name, 0, 2) }}
-                                        </div>
+                                    <div class="max-w-45 flex items-center gap-2 sm:max-w-xs">
+                                        {{-- ⭐ Avatar: gambar kalau ada, fallback inisial --}}
+                                        @if ($cashier->avatar)
+                                            <img src="{{ \Illuminate\Support\Facades\Storage::url($cashier->avatar) }}"
+                                                alt="{{ $cashier->name }}"
+                                                class="h-6 w-6 shrink-0 rounded-full border border-stone-200 object-cover dark:border-stone-700" />
+                                        @else
+                                            <div
+                                                class="bg-sage-100 dark:bg-sage-900/60 text-sage-700 dark:text-sage-400 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[9px] font-bold uppercase">
+                                                {{ mb_substr($cashier->name, 0, 2) }}
+                                            </div>
+                                        @endif
                                         <div class="truncate">
                                             <div class="truncate font-medium text-stone-800 dark:text-stone-200">
                                                 {{ $cashier->name }}
@@ -189,37 +194,52 @@ new #[Title('Manage Cashiers')] class extends Component {
 
                                 {{-- Aksi --}}
                                 <td class="px-2.5 py-1.5 text-right">
-                                    <div class="flex items-center justify-end" x-data="{ open: false }">
-                                        <div class="relative inline-block text-left">
+                                    <div class="flex items-center justify-end" x-data="{
+                                        open: false,
+                                        coords: { top: 0, left: 0 },
+                                        toggle() {
+                                            this.open = !this.open;
+                                            if (this.open) {
+                                                this.$nextTick(() => {
+                                                    const rect = this.$refs.trigger.getBoundingClientRect();
+                                                    const menuWidth = 140; // sesuaikan dengan w-32 (128) + padding
+                                                    this.coords = {
+                                                        top: rect.bottom + 4,
+                                                        left: rect.right - menuWidth
+                                                    };
+                                                });
+                                            }
+                                        }
+                                    }">
 
-                                            {{-- Tombol Titik Tiga --}}
-                                            <button @click="open = !open" @click.outside="open = false"
-                                                class="cursor-pointer rounded-md p-1 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 focus:outline-none dark:hover:bg-stone-800 dark:hover:text-stone-200"
-                                                title="Menu Aksi">
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor"
-                                                    stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
-                                                </svg>
-                                            </button>
+                                        {{-- Trigger --}}
+                                        <button x-ref="trigger" @click="toggle()" @click.outside="open = false"
+                                            class="cursor-pointer rounded-md p-1 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 focus:outline-none dark:hover:bg-stone-800 dark:hover:text-stone-200"
+                                            title="Menu Aksi">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+                                            </svg>
+                                        </button>
 
-                                            {{-- Menu Dropdown Konten --}}
+                                        {{-- Menu — teleport ke body supaya tidak ke-clip overflow --}}
+                                        <template x-teleport="body">
                                             <div x-show="open" x-transition:enter="transition ease-out duration-100"
                                                 x-transition:enter-start="transform opacity-0 scale-95"
                                                 x-transition:enter-end="transform opacity-100 scale-100"
                                                 x-transition:leave="transition ease-in duration-75"
                                                 x-transition:leave-start="transform opacity-100 scale-100"
                                                 x-transition:leave-end="transform opacity-0 scale-95"
-                                                class="absolute right-0 z-30 mt-1 w-32 origin-top-right rounded-md border border-stone-200 bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:border-stone-800 dark:bg-stone-900"
+                                                @click.outside="open = false"
+                                                :style="`position: fixed; top: ${coords.top}px; left: ${coords.left}px; z-index: 9999;`"
+                                                class="w-36 origin-top-right rounded-md border border-stone-200 bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:border-stone-800 dark:bg-stone-900"
                                                 style="display: none;">
-                                                <div class="space-y-0.5 p-1">
 
+                                                <div class="space-y-0.5 p-1">
                                                     {{-- Edit --}}
-                                                    <button x-data
-                                                        x-on:click="$dispatch('edit-cashier-modal', {
-                                                                                                cashierId: {{ $cashier->id }},
-                                                                                            })"
-                                                        @click="open = false"
+                                                    <button
+                                                        x-on:click="$dispatch('edit-cashier-modal', { cashierId: {{ $cashier->id }} }); open = false"
                                                         class="text-sage-600 dark:text-sage-400 hover:bg-sage-50 dark:hover:bg-sage-950/30 flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs transition-colors">
                                                         <svg class="text-sage-500 h-3.5 w-3.5" fill="none"
                                                             stroke="currentColor" stroke-width="2"
@@ -230,12 +250,24 @@ new #[Title('Manage Cashiers')] class extends Component {
                                                         Edit
                                                     </button>
 
-                                                    <flux:separator />
+                                                    {{-- Reset Password --}}
+                                                    <button
+                                                        x-on:click="$dispatch('reset-password-modal', { id: {{ $cashier->id }} }); open = false"
+                                                        class="flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs text-amber-600 transition-colors hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/40">
+                                                        <svg class="h-3.5 w-3.5 text-amber-500" fill="none"
+                                                            stroke="currentColor" stroke-width="2"
+                                                            viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                                        </svg>
+                                                        Reset Password
+                                                    </button>
+
+                                                    <div class="border-t border-stone-100 dark:border-stone-800"></div>
 
                                                     {{-- Hapus --}}
-                                                    <button x-data
-                                                        x-on:click="$dispatch('open-delete-modal', { id: {{ $cashier->id }} })"
-                                                        @click="open = false"
+                                                    <button
+                                                        x-on:click="$dispatch('open-delete-modal', { id: {{ $cashier->id }} }); open = false"
                                                         class="flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40">
                                                         <svg class="h-3.5 w-3.5 text-red-400" fill="none"
                                                             stroke="currentColor" stroke-width="2"
@@ -245,11 +277,9 @@ new #[Title('Manage Cashiers')] class extends Component {
                                                         </svg>
                                                         Hapus
                                                     </button>
-
                                                 </div>
                                             </div>
-
-                                        </div>
+                                        </template>
                                     </div>
                                 </td>
                             </tr>
@@ -276,5 +306,6 @@ new #[Title('Manage Cashiers')] class extends Component {
         <livewire:admin.cashiers.edit-cashier />
         <x-modal-hapus modal_name="open-delete-modal" action_hapus="deleteCashier" title="Hapus Kasir"
             description="Data kasir akan dihapus permanen dari sistem." />
+        <livewire:admin.cashiers.reset-cashier-password />
     </div>
 </div>
