@@ -32,8 +32,8 @@ class SaleSeeder extends Seeder
                 ->subDays(rand(0, 30))
                 ->setTime(rand(8, 21), rand(0, 59), rand(0, 59));
 
-            // Pilih 1-5 produk random
-            $itemCount = rand(1, 5);
+            // Pilih 1-13 produk random
+            $itemCount = rand(1, 13);
             $selectedProducts = $products->random(min($itemCount, $products->count()));
 
             $subtotal = 0;

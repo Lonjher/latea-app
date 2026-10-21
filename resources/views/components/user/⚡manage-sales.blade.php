@@ -2,6 +2,7 @@
 
 use Livewire\Component;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\On;
 use App\Models\Sale;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,32 +12,68 @@ new #[Title('Sale History')] class extends Component {
     public $dateFrom = '';
     public $dateTo = '';
 
+    // === Bulk delete state ===
+    public array $selectedSales = [];
+    public bool $selectAll = false;
+
+    /**
+     * Query dasar — LOCK ke kasir yang login.
+     */
+    protected function buildSalesQuery()
+    {
+        $user = Auth::user();
+
+        return Sale::query()
+            ->with(['store', 'items'])
+            ->where('cashier_id', $user->id)
+            ->when($this->search, fn ($q) => $q->where('invoice_number', 'like', '%' . $this->search . '%'))
+            ->when($this->filterStatus !== '', fn ($q) => $q->where('status', $this->filterStatus))
+            ->when($this->dateFrom, fn ($q) => $q->whereDate('sale_date', '>=', $this->dateFrom))
+            ->when($this->dateTo, fn ($q) => $q->whereDate('sale_date', '<=', $this->dateTo))
+            ->orderByDesc('sale_date');
+    }
+
+    public function updatedSelectAll($value): void
+    {
+        $this->selectedSales = $value
+            ? $this->buildSalesQuery()->take(15)->pluck('id')->toArray()
+            : [];
+    }
+
+    public function updatedSelectedSales(): void
+    {
+        $visible = $this->buildSalesQuery()->take(15)->pluck('id')->toArray();
+        $this->selectAll = ! empty($visible) && count($this->selectedSales) === count($visible);
+    }
+
+    public function clearSelection(): void
+    {
+        $this->selectedSales = [];
+        $this->selectAll = false;
+    }
+
+    public function confirmBulkDelete(): void
+    {
+        if (empty($this->selectedSales)) {
+            return;
+        }
+
+        $this->dispatch('confirm-bulk-delete', ids: $this->selectedSales);
+    }
+
+    #[On('bulk-deleted')]
+    public function onBulkDeleted(int $count = 0): void
+    {
+        $this->clearSelection();
+        session()->flash('success', __(':count transaksi berhasil dihapus.', ['count' => $count]));
+    }
+
     public function with()
     {
         $user = Auth::user();
-        $storeId = $user->store_id;
 
-        // ⭐ Query dasar — LOCK ke kasir yang login
-        $sales = Sale::query()
-            ->with(['store', 'items'])
-            ->where('cashier_id', $user->id)
-            ->when($this->search, function ($query) {
-                $query->where('invoice_number', 'like', '%' . $this->search . '%');
-            })
-            ->when($this->filterStatus !== '', function ($query) {
-                $query->where('status', $this->filterStatus);
-            })
-            ->when($this->dateFrom, function ($query) {
-                $query->whereDate('sale_date', '>=', $this->dateFrom);
-            })
-            ->when($this->dateTo, function ($query) {
-                $query->whereDate('sale_date', '<=', $this->dateTo);
-            })
-            ->orderByDesc('sale_date')
-            ->take(15)
-            ->get();
+        $sales = $this->buildSalesQuery()->take(15)->get();
 
-        // ⭐ Summary personal — seluruh data kasir (tanpa filter)
         $baseQuery = Sale::where('cashier_id', $user->id);
 
         $summary = [
@@ -62,13 +99,22 @@ new #[Title('Sale History')] class extends Component {
 
     <div class="mx-auto mt-2 max-w-7xl space-y-2">
 
+        {{-- ── FLASH SUCCESS ── --}}
+        @if (session('success'))
+            <div class="bg-sage-50 dark:bg-sage-950 border-sage-200 dark:border-sage-800 text-sage-700 dark:text-sage-300 flex items-center gap-2.5 rounded-xl border px-3 py-2 text-xs">
+                <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                {{ session('success') }}
+            </div>
+        @endif
+
         {{-- ⭐ INFO STORE --}}
         @if ($store)
             <div class="rounded-xl border border-stone-200 bg-white px-3 py-3 dark:border-stone-800 dark:bg-stone-900">
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex items-center gap-3">
-                        <div
-                            class="bg-sage-100 dark:bg-sage-900/60 text-sage-700 dark:text-sage-400 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold uppercase">
+                        <div class="bg-sage-100 dark:bg-sage-900/60 text-sage-700 dark:text-sage-400 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold uppercase">
                             {{ mb_substr($store->name, 0, 2) }}
                         </div>
                         <div>
@@ -82,8 +128,7 @@ new #[Title('Sale History')] class extends Component {
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <div
-                            class="rounded-lg border border-stone-200 bg-stone-50 px-3 py-1.5 dark:border-stone-700 dark:bg-stone-800/50">
+                        <div class="rounded-lg border border-stone-200 bg-stone-50 px-3 py-1.5 dark:border-stone-700 dark:bg-stone-800/50">
                             <p class="text-[9px] uppercase tracking-wider text-stone-500 dark:text-stone-400">
                                 {{ __('Kasir') }}
                             </p>
@@ -96,11 +141,8 @@ new #[Title('Sale History')] class extends Component {
             </div>
         @endif
 
-        {{-- ════════════════════════════════════════════════ --}}
-        {{-- SUMMARY CARDS (Personal)                       --}}
-        {{-- ════════════════════════════════════════════════ --}}
+        {{-- SUMMARY CARDS (Personal) --}}
         <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {{-- Total Transaksi --}}
             <div class="rounded-xl border border-stone-200 bg-white p-3 dark:border-stone-800 dark:bg-stone-900">
                 <p class="text-[10px] font-medium uppercase tracking-wider text-stone-500 dark:text-stone-400">
                     {{ __('Transaksi Saya') }}
@@ -109,8 +151,6 @@ new #[Title('Sale History')] class extends Component {
                     {{ number_format($summary['total_transactions'], 0, ',', '.') }}
                 </p>
             </div>
-
-            {{-- Total Revenue --}}
             <div class="rounded-xl border border-stone-200 bg-white p-3 dark:border-stone-800 dark:bg-stone-900">
                 <p class="text-[10px] font-medium uppercase tracking-wider text-stone-500 dark:text-stone-400">
                     {{ __('Pendapatan Saya') }}
@@ -119,8 +159,6 @@ new #[Title('Sale History')] class extends Component {
                     Rp {{ number_format($summary['total_revenue'], 0, ',', '.') }}
                 </p>
             </div>
-
-            {{-- Transaksi Hari Ini --}}
             <div class="rounded-xl border border-stone-200 bg-white p-3 dark:border-stone-800 dark:bg-stone-900">
                 <p class="text-[10px] font-medium uppercase tracking-wider text-stone-500 dark:text-stone-400">
                     {{ __('Hari Ini') }}
@@ -129,8 +167,6 @@ new #[Title('Sale History')] class extends Component {
                     {{ number_format($summary['today_transactions'], 0, ',', '.') }}
                 </p>
             </div>
-
-            {{-- Pendapatan Hari Ini --}}
             <div class="rounded-xl border border-stone-200 bg-white p-3 dark:border-stone-800 dark:bg-stone-900">
                 <p class="text-[10px] font-medium uppercase tracking-wider text-stone-500 dark:text-stone-400">
                     {{ __('Pendapatan Hari Ini') }}
@@ -141,13 +177,9 @@ new #[Title('Sale History')] class extends Component {
             </div>
         </div>
 
-        {{-- ════════════════════════════════════════════════ --}}
-        {{-- FILTER BAR                                     --}}
-        {{-- ════════════════════════════════════════════════ --}}
+        {{-- FILTER BAR --}}
         <div class="rounded-xl border border-stone-200 bg-white px-3 py-3 dark:border-stone-800 dark:bg-stone-900">
             <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-
-                {{-- Search --}}
                 <div class="relative flex-1 min-w-[200px]">
                     <svg class="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-400 dark:text-stone-500"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,7 +190,6 @@ new #[Title('Sale History')] class extends Component {
                         class="focus:ring-sage-500 w-full rounded-lg border border-stone-200 bg-stone-50 py-1.5 pl-8 pr-3 text-xs text-stone-800 transition placeholder:text-stone-400 focus:border-transparent focus:outline-none focus:ring-1 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100" />
                 </div>
 
-                {{-- Filter Status --}}
                 <select wire:model.live="filterStatus"
                     class="focus:ring-sage-500 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 transition focus:outline-none focus:ring-1 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300">
                     <option value="">Semua Status</option>
@@ -166,15 +197,12 @@ new #[Title('Sale History')] class extends Component {
                     <option value="void">Void</option>
                 </select>
 
-                {{-- Date From --}}
                 <input wire:model.live="dateFrom" type="date"
                     class="focus:ring-sage-500 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 transition focus:outline-none focus:ring-1 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300" />
 
-                {{-- Date To --}}
                 <input wire:model.live="dateTo" type="date"
                     class="focus:ring-sage-500 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-700 transition focus:outline-none focus:ring-1 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300" />
 
-                {{-- Reset --}}
                 @if ($search || $filterStatus || $dateFrom || $dateTo)
                     <button
                         wire:click="$set('search', ''); $set('filterStatus', ''); $set('dateFrom', ''); $set('dateTo', '')"
@@ -185,11 +213,8 @@ new #[Title('Sale History')] class extends Component {
             </div>
         </div>
 
-        {{-- ════════════════════════════════════════════════ --}}
-        {{-- TABLE CARD                                     --}}
-        {{-- ════════════════════════════════════════════════ --}}
-        <div
-            class="overflow-hidden rounded-xl border border-stone-200 bg-white px-4 dark:border-stone-800 dark:bg-stone-900">
+        {{-- TABLE CARD --}}
+        <div class="overflow-hidden rounded-xl border border-stone-200 bg-white px-4 dark:border-stone-800 dark:bg-stone-900">
 
             {{-- Table meta --}}
             <div class="flex items-center justify-between border-b border-stone-100 py-2 dark:border-stone-800">
@@ -201,13 +226,41 @@ new #[Title('Sale History')] class extends Component {
                 </span>
                 <div wire:loading class="text-sage-600 dark:text-sage-400 flex items-center gap-1 text-[11px]">
                     <svg class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                            stroke-width="4" />
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                     </svg>
                     {{ __('Memuat…') }}
                 </div>
             </div>
+
+            {{-- ═══ BULK ACTION BAR — dipindah ke dalam table card ═══ --}}
+            @if (count($selectedSales) > 0)
+                <div class="flex items-center justify-between gap-2 border-b border-sage-200 bg-sage-50 px-4 py-2 dark:border-sage-900/50 dark:bg-sage-950/30">
+                    <div class="flex items-center gap-2 text-[11px] font-medium text-sage-800 dark:text-sage-300">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {{ count($selectedSales) }} {{ __('transaksi dipilih') }}
+                    </div>
+
+                    <div class="flex items-center gap-1.5">
+                        <button wire:click="clearSelection"
+                            class="rounded-md border border-stone-200 bg-white px-2.5 py-1 text-[11px] font-medium text-stone-600 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-400 dark:hover:bg-stone-700">
+                            {{ __('Batal Pilih') }}
+                        </button>
+
+                        <button wire:click="confirmBulkDelete"
+                            class="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-red-600 px-2.5 py-1 text-[11px] font-medium text-white transition hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600">
+                            <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                            </svg>
+                            {{ __('Hapus Terpilih') }}
+                        </button>
+                    </div>
+                </div>
+            @endif
 
             {{-- Table --}}
             <div class="overflow-x-auto rounded-xl border bg-white shadow-sm dark:border-stone-800 dark:bg-stone-900">
@@ -215,129 +268,61 @@ new #[Title('Sale History')] class extends Component {
                     <thead>
                         <tr
                             class="border-b border-stone-200 bg-stone-50 font-semibold uppercase tracking-wider text-stone-500 dark:border-stone-800 dark:bg-stone-800/50 dark:text-stone-400">
+                            <th class="w-8 px-2.5 py-1.5 text-center">
+                                <input type="checkbox" wire:model.live="selectAll"
+                                    class="focus:ring-sage-500 h-3.5 w-3.5 cursor-pointer rounded border-stone-300 text-sage-600 focus:ring-1 dark:border-stone-600 dark:bg-stone-700" />
+                            </th>
                             <th class="w-6 px-2.5 py-1.5 text-center">#</th>
                             <th class="px-2.5 py-1.5">{{ __('Invoice') }}</th>
                             <th class="hidden px-2.5 py-1.5 sm:table-cell">{{ __('Tanggal') }}</th>
                             <th class="hidden w-16 px-2.5 py-1.5 text-center md:table-cell">{{ __('Item') }}</th>
                             <th class="px-2.5 py-1.5 text-right">{{ __('Total') }}</th>
                             <th class="hidden w-20 px-2.5 py-1.5 text-center sm:table-cell">{{ __('Status') }}</th>
-                            <th class="w-16 px-2.5 py-1.5 text-right">{{ __('Aksi') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-stone-100 dark:divide-stone-800/60">
                         @forelse ($sales as $sale)
-                            <tr class="group transition-colors hover:bg-stone-50 dark:hover:bg-stone-800/30">
-
-                                {{-- No --}}
+                            <tr x-data
+                                @click="$dispatch('open-detail-sale-modal', { saleId: {{ $sale->id }} })"
+                                class="group cursor-pointer transition-colors hover:bg-stone-50 dark:hover:bg-stone-800/30">
+                                <td class="px-2.5 py-1.5 text-center">
+                                    <input type="checkbox" wire:model.live="selectedSales" value="{{ $sale->id }}"
+                                        class="focus:ring-sage-500 h-3.5 w-3.5 cursor-pointer rounded border-stone-300 text-sage-600 focus:ring-1 dark:border-stone-600 dark:bg-stone-700" />
+                                </td>
                                 <td class="px-2.5 py-1.5 text-center font-mono text-stone-400 dark:text-stone-600">
                                     {{ $loop->iteration }}
                                 </td>
-
-                                {{-- Invoice --}}
                                 <td class="px-2.5 py-1.5 font-mono font-medium text-stone-800 dark:text-stone-200">
                                     {{ $sale->invoice_number }}
                                 </td>
-
-                                {{-- Tanggal --}}
                                 <td class="hidden px-2.5 py-1.5 text-stone-500 sm:table-cell dark:text-stone-400">
                                     {{ $sale->sale_date->format('d M Y, H:i') }}
                                 </td>
-
-                                {{-- Item Count --}}
                                 <td class="hidden px-2.5 py-1.5 text-center md:table-cell">
-                                    <span
-                                        class="inline-flex items-center rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-600 dark:bg-stone-800 dark:text-stone-400">
+                                    <span class="inline-flex items-center rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-600 dark:bg-stone-800 dark:text-stone-400">
                                         {{ $sale->items->count() }}
                                     </span>
                                 </td>
-
-                                {{-- Total --}}
-                                <td
-                                    class="px-2.5 py-1.5 text-right font-mono font-medium text-sage-700 dark:text-sage-400">
+                                <td class="px-2.5 py-1.5 text-right font-mono font-medium text-sage-700 dark:text-sage-400">
                                     Rp {{ number_format($sale->total, 0, ',', '.') }}
                                 </td>
-
-                                {{-- Status --}}
                                 <td class="hidden px-2.5 py-1.5 text-center sm:table-cell">
                                     @php
                                         $statusClasses =
                                             [
-                                                'completed' =>
-                                                    'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-400',
+                                                'completed' => 'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-400',
                                                 'void' => 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400',
                                             ][$sale->status] ??
                                             'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400';
                                     @endphp
-                                    <span
-                                        class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold {{ $statusClasses }}">
+                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold {{ $statusClasses }}">
                                         {{ ucfirst($sale->status) }}
                                     </span>
-                                </td>
-
-                                {{-- Aksi --}}
-                                <td class="px-2.5 py-1.5 text-right">
-                                    <div class="flex items-center justify-end" x-data="{
-                                        open: false,
-                                        coords: { top: 0, left: 0 },
-                                        toggle() {
-                                            this.open = !this.open;
-                                            if (this.open) {
-                                                this.$nextTick(() => {
-                                                    const rect = this.$refs.trigger.getBoundingClientRect();
-                                                    const menuWidth = 144; // w-36 = 9rem = 144px
-                                                    this.coords = {
-                                                        top: rect.bottom + 4,
-                                                        left: rect.right - menuWidth
-                                                    };
-                                                });
-                                            }
-                                        }
-                                    }">
-
-                                        {{-- Tombol Titik Tiga --}}
-                                        <button x-ref="trigger" @click="toggle()" @click.outside="open = false"
-                                            class="cursor-pointer rounded-md p-1 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 focus:outline-none dark:hover:bg-stone-800 dark:hover:text-stone-200"
-                                            title="Menu Aksi">
-                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
-                                            </svg>
-                                        </button>
-
-                                        {{-- Dropdown — teleport ke body --}}
-                                        <template x-teleport="body">
-                                            <div x-show="open" x-transition @click.outside="open = false"
-                                                :style="`position: fixed; top: ${coords.top}px; left: ${coords.left}px; z-index: 9999;`"
-                                                class="w-36 origin-top-right rounded-md border border-stone-200 bg-white shadow-lg ring-1 ring-black/5 focus:outline-none dark:border-stone-800 dark:bg-stone-900"
-                                                style="display: none;">
-
-                                                <div class="space-y-0.5 p-1">
-
-                                                    {{-- Lihat Detail --}}
-                                                    <button
-                                                        x-on:click="$dispatch('open-detail-sale-modal', { saleId: {{ $sale->id }} }); open = false"
-                                                        class="text-sage-600 dark:text-sage-400 hover:bg-sage-50 dark:hover:bg-sage-950/30 flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs transition-colors">
-                                                        <svg class="text-sage-500 h-3.5 w-3.5" fill="none"
-                                                            stroke="currentColor" stroke-width="2"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        </svg>
-                                                        Lihat Detail
-                                                    </button>
-
-                                                </div>
-                                            </div>
-                                        </template>
-                                    </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-2.5 py-10 text-center">
+                                <td colspan="8" class="px-2.5 py-10 text-center">
                                     <div class="flex flex-col items-center gap-1.5 text-stone-400">
                                         <svg class="h-8 w-8 text-stone-300 dark:text-stone-600" fill="none"
                                             stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -360,4 +345,7 @@ new #[Title('Sale History')] class extends Component {
 
     {{-- Modal detail sale --}}
     <livewire:user.sales.detail-sale />
+
+    {{-- Modal konfirmasi bulk delete (child) --}}
+    <livewire:admin.sales.bulk-delete-sales-modal />
 </div>
