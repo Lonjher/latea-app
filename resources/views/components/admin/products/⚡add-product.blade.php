@@ -351,7 +351,7 @@ new class extends Component {
                                             class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
                                             {{ __('Min. Qty untuk Diskon') }}
                                         </label>
-                                        <input wire:model="form.minimal_discount" type="number" min="1"
+                                        <input wire:model="form.minimal_discount" type="number"
                                             placeholder="cth: 10"
                                             class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100" />
                                         <p class="mt-0.5 text-[10px] text-stone-400 dark:text-stone-500">
