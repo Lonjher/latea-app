@@ -31,7 +31,7 @@ class ProductForm extends Form
             'image' => ['nullable', 'image', 'max:2048'],
             'initial_price' => ['required', 'numeric', 'min:0'],           // HPP
             'discount_price' => ['nullable', 'numeric', 'min:0', 'lt:price'], // Diskon < harga jual
-            'minimal_discount' => ['nullable', 'integer', 'min:1', 'required_with:discount_price'],
+            'minimal_discount' => ['nullable', 'integer', 'min:0', 'required_with:discount_price'],
             'price' => ['required', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
         ];
@@ -71,7 +71,7 @@ class ProductForm extends Form
 
             // Minimal Discount
             'minimal_discount.integer' => 'Minimal qty diskon harus berupa angka bulat.',
-            'minimal_discount.min' => 'Minimal qty diskon minimal 1.',
+            'minimal_discount.min' => 'Minimal qty diskon minimal 0.',
             'minimal_discount.required_with' => 'Minimal qty wajib diisi jika harga diskon diisi.',
 
             // Price
