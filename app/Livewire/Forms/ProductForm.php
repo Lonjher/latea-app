@@ -16,10 +16,10 @@ class ProductForm extends Form
     public $name;
     public $description;
     public ?TemporaryUploadedFile $image = null;
-    public $initial_price;      // HPP
-    public $discount_price;     // Harga promo
-    public $minimal_discount;   // Qty minimum untuk promo
-    public $price;              // Harga jual normal
+    public $initial_price;
+    public $discount_price;
+    public $minimal_discount;
+    public $price;
     public $is_active;
 
     public function rules(): array
@@ -29,10 +29,25 @@ class ProductForm extends Form
             'name' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'image' => ['nullable', 'image', 'max:2048'],
-            'initial_price' => ['required', 'numeric', 'min:0'],           // HPP
-            'discount_price' => ['nullable', 'numeric', 'min:0', 'lt:price'], // Diskon < harga jual
-            'minimal_discount' => ['nullable', 'integer', 'min:0', 'required_with:discount_price'],
+            'initial_price' => ['required', 'numeric', 'min:0'],
             'price' => ['required', 'numeric', 'min:0'],
+
+            // Diskon opsional — kosong berarti tidak ada diskon
+            'discount_price' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                'lt:price',
+            ],
+
+            // Minimal qty wajib jika discount_price terisi
+            'minimal_discount' => [
+                'nullable',
+                'integer',
+                'min:1',
+                'required_with:discount_price',
+            ],
+
             'is_active' => ['boolean'],
         ];
     }
@@ -71,7 +86,7 @@ class ProductForm extends Form
 
             // Minimal Discount
             'minimal_discount.integer' => 'Minimal qty diskon harus berupa angka bulat.',
-            'minimal_discount.min' => 'Minimal qty diskon minimal 0.',
+            'minimal_discount.min' => 'Minimal qty diskon minimal 1.',
             'minimal_discount.required_with' => 'Minimal qty wajib diisi jika harga diskon diisi.',
 
             // Price
@@ -92,14 +107,37 @@ class ProductForm extends Form
         $this->description = $product->description;
         $this->image = null;
         $this->initial_price = $product->getRawOriginal('initial_price');
-        $this->discount_price = $product->getRawOriginal('discount_price');
+        $this->discount_price = $product->discount_price;      // null jika tidak ada diskon
         $this->price = $product->getRawOriginal('price');
-        $this->minimal_discount = $product->minimal_discount;
+        $this->minimal_discount = $product->minimal_discount;  // null jika tidak ada diskon
         $this->is_active = (bool) $product->is_active;
+    }
+
+    /**
+     * Normalisasi field diskon sebelum validasi & save.
+     *
+     * Aturan:
+     * - discount_price kosong  → null, dan paksa minimal_discount = null
+     * - discount_price terisi  → biarkan; jika minimal_discount kosong, `required_with` akan gagal
+     */
+    protected function normalizeDiscountFields(): void
+    {
+        // Tidak ada diskon → kedua field jadi null
+        if ($this->discount_price === '' || $this->discount_price === null) {
+            $this->discount_price = null;
+            $this->minimal_discount = null;
+            return;
+        }
+
+        // Ada diskon → minimal_discount harus terisi (validasi yang enforce)
+        if ($this->minimal_discount === '' || $this->minimal_discount === null) {
+            $this->minimal_discount = null;
+        }
     }
 
     public function create()
     {
+        $this->normalizeDiscountFields();
         $this->validate();
 
         $imagePath = $this->image
@@ -123,6 +161,7 @@ class ProductForm extends Form
 
     public function update()
     {
+        $this->normalizeDiscountFields();
         $this->validate();
 
         if ($this->image) {

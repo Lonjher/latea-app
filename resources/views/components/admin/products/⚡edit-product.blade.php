@@ -17,8 +17,8 @@ new class extends Component {
         $product = Product::findOrFail($productId);
         $this->form->setProduct($product);
 
-        // Simpan URL gambar lama untuk preview
-        $this->existingImageUrl = $product->image ? Storage::url($product->image) : null;
+        // Pakai asset() supaya tidak kena error Storage::url() di beberapa setup
+        $this->existingImageUrl = $product->image ? asset('storage/' . $product->image) : null;
     }
 
     public function updateProduct()
@@ -47,12 +47,10 @@ new class extends Component {
                 this.errorMessage = '';
                 this.show = true;
             });
-
             window.addEventListener('update-success', (e) => {
                 this.show = false;
                 this.successMessage = e.detail.message;
             });
-
             window.addEventListener('update-error', (e) => {
                 this.errorMessage = e.detail.message;
             });
@@ -67,12 +65,9 @@ new class extends Component {
             {{-- Loading editProduct --}}
             <div wire:loading wire:target="editProduct"
                 class="absolute inset-0 z-50 flex items-center justify-center bg-white/60 backdrop-blur-[0.5px] dark:bg-stone-900/60">
-                <div
-                    class="flex items-center gap-1.5 rounded-md border border-stone-100 bg-white px-2.5 py-1.5 shadow-sm dark:border-stone-700 dark:bg-stone-800">
-                    <svg class="h-3.5 w-3.5 animate-spin text-sage-600 dark:text-sage-400" fill="none"
-                        viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                            stroke-width="4"></circle>
+                <div class="flex items-center gap-1.5 rounded-md border border-stone-100 bg-white px-2.5 py-1.5 shadow-sm dark:border-stone-700 dark:bg-stone-800">
+                    <svg class="h-3.5 w-3.5 animate-spin text-sage-600 dark:text-sage-400" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V12H4z"></path>
                     </svg>
                     <span class="text-[10px] font-medium text-stone-600 dark:text-stone-300">
@@ -84,12 +79,9 @@ new class extends Component {
             {{-- Loading updateProduct --}}
             <div wire:loading wire:target="updateProduct"
                 class="absolute inset-0 z-50 flex items-center justify-center bg-white/60 backdrop-blur-[0.5px] dark:bg-stone-900/60">
-                <div
-                    class="flex items-center gap-1.5 rounded-md border border-stone-100 bg-white px-2.5 py-1.5 shadow-sm dark:border-stone-700 dark:bg-stone-800">
-                    <svg class="h-3.5 w-3.5 animate-spin text-sage-600 dark:text-sage-400" fill="none"
-                        viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                            stroke-width="4"></circle>
+                <div class="flex items-center gap-1.5 rounded-md border border-stone-100 bg-white px-2.5 py-1.5 shadow-sm dark:border-stone-700 dark:bg-stone-800">
+                    <svg class="h-3.5 w-3.5 animate-spin text-sage-600 dark:text-sage-400" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V12H4z"></path>
                     </svg>
                     <span class="text-[10px] font-medium text-stone-600 dark:text-stone-300">
@@ -162,7 +154,7 @@ new class extends Component {
                             @enderror
                         </div>
 
-                        {{-- Baris 3: Image Upload dengan Preview (existing + new) --}}
+                        {{-- Baris 3: Image Upload dengan Preview --}}
                         <div>
                             <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
                                 {{ __('Gambar Produk') }}
@@ -187,7 +179,11 @@ new class extends Component {
                                 get currentImage() {
                                     return this.previewUrl || this.existingUrl;
                                 }
-                            }">
+                            }" x-init="$watch('$wire.existingImageUrl', v => {
+                                existingUrl = v;
+                                previewUrl = null;
+                                fileName = '';
+                            });">
 
                                 {{-- Area Upload (muncul kalau belum ada gambar) --}}
                                 <div x-show="!currentImage"
@@ -198,12 +194,11 @@ new class extends Component {
                                             d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                                     </svg>
                                     <label class="cursor-pointer">
-                                        <span
-                                            class="text-sage-600 dark:text-sage-400 text-[11px] font-medium hover:underline">
+                                        <span class="text-sage-600 dark:text-sage-400 text-[11px] font-medium hover:underline">
                                             {{ __('Klik untuk upload') }}
                                         </span>
-                                        <input wire:model="form.image" type="file" accept="image/*" class="hidden"
-                                            x-on:change="handleFile($event)" />
+                                        <input wire:model="form.image" type="file" accept="image/*"
+                                            class="hidden" x-on:change="handleFile($event)" />
                                     </label>
                                     <p class="mt-1 text-[10px] text-stone-400 dark:text-stone-500">
                                         {{ __('PNG, JPG, WEBP maks 2MB') }}
@@ -219,8 +214,7 @@ new class extends Component {
                                         <div class="min-w-0 flex-1">
                                             <p class="truncate text-[11px] font-medium text-stone-700 dark:text-stone-200"
                                                 x-text="fileName || '{{ __('Gambar saat ini') }}'"></p>
-                                            <p class="text-[10px] text-stone-400 dark:text-stone-500"
-                                                x-show="!previewUrl">
+                                            <p class="text-[10px] text-stone-400 dark:text-stone-500" x-show="!previewUrl">
                                                 {{ __('Upload baru untuk mengganti') }}
                                             </p>
                                             <p class="text-sage-600 dark:text-sage-400 text-[10px]" x-show="previewUrl"
@@ -259,95 +253,158 @@ new class extends Component {
                             </div>
                         </div>
 
-                        {{-- Baris 4: HPP & Harga Jual --}}
-                        <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                            <div>
-                                <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                    {{ __('HPP (Harga Pokok)') }}
-                                </label>
-                                <input wire:model="form.initial_price" type="number" step="0.01" min="0"
-                                    placeholder="0.00" required
-                                    class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100" />
-                                <p class="mt-0.5 text-[10px] text-stone-400 dark:text-stone-500">
-                                    {{ __('Modal / harga beli dari supplier.') }}
-                                </p>
-                                @error('form.initial_price')
-                                    <p class="mt-0.5 text-[10px] text-red-500">{{ $message }}</p>
-                                @enderror
-                            </div>
+                        {{-- Baris 4-5: Harga & Diskon --}}
+                        <div x-data="{
+                            hpp: { display: '', raw: '' },
+                            jual: { display: '', raw: '' },
+                            diskon: { display: '', raw: '' },
 
-                            <div>
-                                <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                    {{ __('Harga Jual') }}
-                                </label>
-                                <input wire:model="form.price" type="number" step="0.01" min="0"
-                                    placeholder="0.00" required
-                                    class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100" />
-                                <p class="mt-0.5 text-[10px] text-stone-400 dark:text-stone-500">
-                                    {{ __('Harga normal yang dibayar customer.') }}
-                                </p>
-                                @error('form.price')
-                                    <p class="mt-0.5 text-[10px] text-red-500">{{ $message }}</p>
-                                @enderror
+                            normalize(val) {
+                                if (val === null || val === undefined || val === '') return '';
+                                return String(val).replace(/\D/g, '');
+                            },
+                            format(val) {
+                                if (!val || val === '') return '';
+                                return 'Rp ' + new Intl.NumberFormat('id-ID').format(val);
+                            },
+
+                            init() {
+                                this.syncFromLivewire('hpp', 'form.initial_price');
+                                this.syncFromLivewire('jual', 'form.price');
+                                this.syncFromLivewire('diskon', 'form.discount_price');
+                            },
+
+                            syncFromLivewire(field, livewirePath) {
+                                const initial = this.normalize($wire.get(livewirePath));
+                                this[field].raw = initial;
+                                this[field].display = this.format(initial);
+
+                                this.$watch(() => $wire.get(livewirePath), (val) => {
+                                    const normalized = this.normalize(val);
+                                    if (normalized !== this[field].raw) {
+                                        this[field].raw = normalized;
+                                        this[field].display = this.format(normalized);
+                                    }
+                                });
+                            },
+
+                            onInput(field, livewirePath, event) {
+                                const raw = this.normalize(event.target.value);
+                                this[field].raw = raw;
+                                this[field].display = this.format(raw);
+
+                                $wire.set(livewirePath, raw === '' ? null : parseInt(raw, 10), false);
+
+                                if (field === 'diskon' && raw === '') {
+                                    $wire.set('form.minimal_discount', null, false);
+                                }
+
+                                this.$nextTick(() => {
+                                    event.target.value = this[field].display;
+                                    const len = event.target.value.length;
+                                    event.target.setSelectionRange(len, len);
+                                });
+                            }
+                        }">
+
+                            <div class="space-y-2.5">
+                                {{-- Baris 4: HPP & Harga Jual --}}
+                                <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                                    <div>
+                                        <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
+                                            {{ __('HPP (Harga Pokok)') }}
+                                        </label>
+                                        <input type="text" inputmode="numeric" x-model="hpp.display"
+                                            @input="onInput('hpp', 'form.initial_price', $event)" placeholder="Rp 0"
+                                            required
+                                            class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100" />
+                                        <p class="mt-0.5 text-[10px] text-stone-400 dark:text-stone-500">
+                                            {{ __('Modal / harga beli dari supplier.') }}
+                                        </p>
+                                        @error('form.initial_price')
+                                            <p class="mt-0.5 text-[10px] text-red-500">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
+                                            {{ __('Harga Jual') }}
+                                        </label>
+                                        <input type="text" inputmode="numeric" x-model="jual.display"
+                                            @input="onInput('jual', 'form.price', $event)" placeholder="Rp 0" required
+                                            class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100" />
+                                        <p class="mt-0.5 text-[10px] text-stone-400 dark:text-stone-500">
+                                            {{ __('Harga normal yang dibayar customer.') }}
+                                        </p>
+                                        @error('form.price')
+                                            <p class="mt-0.5 text-[10px] text-red-500">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                {{-- Baris 5: Diskon & Min Qty --}}
+                                <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                                    <div>
+                                        <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
+                                            {{ __('Harga Diskon') }}
+                                            <span class="text-[10px] font-normal text-stone-400 dark:text-stone-500">(opsional)</span>
+                                        </label>
+                                        <input type="text" inputmode="numeric" x-model="diskon.display"
+                                            @input="onInput('diskon', 'form.discount_price', $event)"
+                                            placeholder="Kosongkan jika tidak ada diskon"
+                                            class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100" />
+                                        <p class="mt-0.5 text-[10px] text-stone-400 dark:text-stone-500">
+                                            {{ __('Harga promo untuk pembelian grosir.') }}
+                                        </p>
+                                        @error('form.discount_price')
+                                            <p class="mt-0.5 text-[10px] text-red-500">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
+                                            {{ __('Min. Qty untuk Diskon') }}
+                                            <template x-if="diskon.raw !== ''">
+                                                <span class="text-[10px] font-semibold text-red-500">*</span>
+                                            </template>
+                                        </label>
+
+                                        <input wire:model="form.minimal_discount" type="number" min="1"
+                                            :disabled="diskon.raw === ''"
+                                            :placeholder="diskon.raw === '' ? '{{ __('Isi harga diskon dulu') }}' : '{{ __('cth: 10') }}'"
+                                            class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 disabled:cursor-not-allowed disabled:bg-stone-100 disabled:opacity-60 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:disabled:bg-stone-800/50" />
+
+                                        <p class="mt-0.5 text-[10px] text-stone-400 dark:text-stone-500"
+                                            x-text="diskon.raw === '' ? '{{ __('Hanya perlu diisi jika ada harga diskon.') }}' : '{{ __('Kuantitas minimum agar harga diskon berlaku.') }}'">
+                                        </p>
+
+                                        @error('form.minimal_discount')
+                                            <p class="mt-0.5 text-[10px] text-red-500">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        {{-- Baris 5: Diskon & Min Qty --}}
-                        <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                            <div>
-                                <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                    {{ __('Harga Diskon') }}
-                                </label>
-                                <input wire:model="form.discount_price" type="number" step="0.01" min="0"
-                                    placeholder="0.00"
-                                    class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100" />
-                                <p class="mt-0.5 text-[10px] text-stone-400 dark:text-stone-500">
-                                    {{ __('Harga promo untuk pembelian grosir.') }}
-                                </p>
-                                @error('form.discount_price')
-                                    <p class="mt-0.5 text-[10px] text-red-500">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div>
-                                <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
-                                    {{ __('Min. Qty untuk Diskon') }}
-                                </label>
-                                <input wire:model="form.minimal_discount" type="number"
-                                    placeholder="cth: 10"
-                                    class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100" />
-                                <p class="mt-0.5 text-[10px] text-stone-400 dark:text-stone-500">
-                                    {{ __('Kuantitas minimum agar harga diskon berlaku.') }}
-                                </p>
-                                @error('form.minimal_discount')
-                                    <p class="mt-0.5 text-[10px] text-red-500">{{ $message }}</p>
-                                @enderror
-                            </div>
-                        </div>
-
-                        {{-- Baris 6: Active --}}
+                        {{-- Baris 6: Active (SEKARANG DI DALAM space-y-2.5) --}}
                         <div>
                             <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
                                 {{ __('Status') }}
                             </label>
 
-                            <div
-                                class="flex items-center gap-2.5 rounded-md border border-stone-200 bg-stone-50 px-2.5 py-2 dark:border-stone-700 dark:bg-stone-800">
-                                {{-- Toggle --}}
+                            <div class="flex items-center gap-2.5 rounded-md border border-stone-200 bg-stone-50 px-2.5 py-2 dark:border-stone-700 dark:bg-stone-800">
                                 <button type="button" wire:click="$toggle('form.is_active')" role="switch"
                                     aria-checked="{{ $form->is_active ? 'true' : 'false' }}"
                                     class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-1
-                {{ $form->is_active ? 'bg-sage-600 dark:bg-sage-500' : 'bg-stone-300 dark:bg-stone-600' }}">
+                                        {{ $form->is_active ? 'bg-sage-600 dark:bg-sage-500' : 'bg-stone-300 dark:bg-stone-600' }}">
                                     <span
                                         class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform
-                    {{ $form->is_active ? 'translate-x-[18px]' : 'translate-x-0.5' }}">
+                                            {{ $form->is_active ? 'translate-x-[18px]' : 'translate-x-0.5' }}">
                                     </span>
                                 </button>
 
-                                {{-- Label Status --}}
                                 <div class="flex flex-col">
-                                    <span
-                                        class="text-[11px] font-medium {{ $form->is_active ? 'text-sage-700 dark:text-sage-400' : 'text-stone-500 dark:text-stone-400' }}">
+                                    <span class="text-[11px] font-medium {{ $form->is_active ? 'text-sage-700 dark:text-sage-400' : 'text-stone-500 dark:text-stone-400' }}">
                                         {{ $form->is_active ? __('Aktif') : __('Non Aktif') }}
                                     </span>
                                     <span class="text-[10px] text-stone-400 dark:text-stone-500">
@@ -363,9 +420,8 @@ new class extends Component {
                     </div>
                 </div>
 
-                {{-- FOOTER --}}
-                <div
-                    class="flex flex-shrink-0 justify-end gap-1.5 border-t border-stone-100 bg-white p-4 pt-3 dark:border-stone-800 dark:bg-stone-900">
+                {{-- FOOTER (SEKARANG DI DALAM form) --}}
+                <div class="flex flex-shrink-0 justify-end gap-1.5 border-t border-stone-100 bg-white p-4 pt-3 dark:border-stone-800 dark:bg-stone-900">
                     <button type="button" @click="show = false"
                         class="cursor-pointer rounded-md border border-stone-200 px-3 py-1.5 text-xs font-medium text-stone-600 transition hover:bg-stone-50 dark:border-stone-700 dark:text-stone-400 dark:hover:bg-stone-800">
                         {{ __('Batal') }}
@@ -381,3 +437,4 @@ new class extends Component {
         </div>
     </div>
 </div>
+

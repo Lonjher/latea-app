@@ -274,7 +274,13 @@ new class extends Component {
                                     this[field].raw = raw;
                                     this[field].display = this.format(raw);
 
-                                    $wire.set(livewirePath, raw === '' ? '' : parseInt(raw, 10), false);
+                                    // Simpan nilai ke Livewire (null jika kosong)
+                                    $wire.set(livewirePath, raw === '' ? null : parseInt(raw, 10), false);
+
+                                    // Kalau diskon dikosongkan → clear min qty juga
+                                    if (field === 'diskon' && raw === '') {
+                                        $wire.set('form.minimal_discount', null, false);
+                                    }
 
                                     // Jaga cursor di akhir
                                     this.$nextTick(() => {
@@ -329,13 +335,13 @@ new class extends Component {
 
                                     {{-- Harga Diskon --}}
                                     <div>
-                                        <label
-                                            class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
+                                        <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
                                             {{ __('Harga Diskon') }}
+                                            <span class="text-[10px] font-normal text-stone-400 dark:text-stone-500">(opsional)</span>
                                         </label>
                                         <input type="text" inputmode="numeric" x-model="diskon.display"
                                             @input="onInput('diskon', 'form.discount_price', $event)"
-                                            placeholder="Rp 0"
+                                            placeholder="Kosongkan jika tidak ada diskon"
                                             class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100" />
                                         <p class="mt-0.5 text-[10px] text-stone-400 dark:text-stone-500">
                                             {{ __('Harga promo untuk pembelian grosir.') }}
@@ -345,18 +351,30 @@ new class extends Component {
                                         @enderror
                                     </div>
 
-                                    {{-- Min Qty (tidak berubah) --}}
+                                    {{-- Min Qty --}}
                                     <div>
-                                        <label
-                                            class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
+                                        <label class="mb-0.5 block text-[11px] font-medium text-stone-600 dark:text-stone-400">
                                             {{ __('Min. Qty untuk Diskon') }}
+                                            {{-- Badge wajib / opsional — reaktif --}}
+                                            <template x-if="diskon.raw !== ''">
+                                                <span class="text-[10px] font-semibold text-red-500">*</span>
+                                            </template>
                                         </label>
-                                        <input wire:model="form.minimal_discount" type="number"
-                                            placeholder="cth: 10"
-                                            class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100" />
-                                        <p class="mt-0.5 text-[10px] text-stone-400 dark:text-stone-500">
-                                            {{ __('Kuantitas minimum agar harga diskon berlaku.') }}
+
+                                        <input wire:model="form.minimal_discount" type="number" min="1"
+                                            :disabled="diskon.raw === ''"
+                                            :placeholder="diskon.raw === '' ? '{{ __('Isi harga diskon dulu') }}' : '{{ __('cth: 10') }}'"
+                                            class="w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500
+                                                disabled:cursor-not-allowed disabled:bg-stone-100 disabled:opacity-60
+                                                dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100
+                                                dark:disabled:bg-stone-800/50" />
+
+                                        <p class="mt-0.5 text-[10px] text-stone-400 dark:text-stone-500"
+                                            x-text="diskon.raw === ''
+                                                ? '{{ __('Hanya perlu diisi jika ada harga diskon.') }}'
+                                                : '{{ __('Kuantitas minimum agar harga diskon berlaku.') }}'">
                                         </p>
+
                                         @error('form.minimal_discount')
                                             <p class="mt-0.5 text-[10px] text-red-500">{{ $message }}</p>
                                         @enderror
