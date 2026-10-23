@@ -301,7 +301,7 @@
                                 </svg>
 
 
-                                <span class="font-medium">{{ __('Pendapatan') }}</span>
+                                <span class="font-medium">{{ __('Analisis Penjualan') }}</span>
                             </div>
                         </a>
                     @endcan

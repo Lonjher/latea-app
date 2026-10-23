@@ -66,7 +66,7 @@ new #[Title('Dashboard')] class extends Component {
         $recentSales = (clone $todayQuery)
             ->with(['store', 'items'])
             ->orderByDesc('sale_date')
-            ->take(5)
+            ->take($topProducts->count())
             ->get();
 
         // ── BREAKDOWN PER STORE HARI INI ──
