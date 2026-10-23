@@ -79,7 +79,6 @@ new #[Title('Dashboard')] class extends Component {
             ->with('store')
             ->orderByDesc('revenue')
             ->get();
-
         return [
             'stores' => Store::orderBy('name')->get(),
             'metrics' => [
