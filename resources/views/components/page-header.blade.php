@@ -4,8 +4,8 @@
     'time' => false,
 ])
 
-<div class="rounded-xl border-b border-stone-200 bg-white px-5 py-3.5 dark:border-stone-800 dark:bg-stone-900">
-    <div class="mx-auto max-w-7xl">
+<div>
+    <div class="px-5 py-3.5 rounded-xl border-b border-stone-200 bg-white mx-auto max-w-7xl dark:border-stone-800 dark:bg-stone-900">
 
         {{-- Baris atas: Manajemen + Jam --}}
         <div class="flex items-center justify-between gap-3"

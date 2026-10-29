@@ -1,10 +1,12 @@
 <?php
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use Livewire\Attributes\Title;
 use App\Models\User;
 
 new #[Title('Manage Cashiers')] class extends Component {
+    use WithPagination;
     public $search;
     public $filterActive = '';
     public $filterStore = '';

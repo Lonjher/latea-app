@@ -18,7 +18,7 @@ class MobileProductController extends Controller
         $user = $request->user();
         $storeId = $user->store_id;
 
-        if (! $storeId) {
+        if (!$storeId) {
             return response()->json([
                 'message' => 'Kasir belum ditugaskan ke toko manapun.',
             ], 403);
@@ -27,16 +27,17 @@ class MobileProductController extends Controller
         $products = Product::query()
             ->where('is_active', true)
             ->whereHas('stores', function ($q) use ($storeId) {
-                $q->where('stores.id', $storeId)
-                  ->where('store_products.is_available', true);
+                // Hanya ambil produk yang di-assign ke toko ini
+                $q->where('stores.id', $storeId);
             })
             ->with([
                 'stores' => function ($q) use ($storeId) {
                     $q->where('stores.id', $storeId)
-                      ->withPivot(['price', 'is_available']);
+                    ->withPivot(['price', 'is_available']);
                 },
             ])
-            ->orderBy('name')
+            // ⭐ Urutkan berdasarkan abjad (code) untuk tampilan default
+            ->orderBy('code', 'asc')
             ->get()
             ->map(function (Product $product) use ($storeId) {
                 $pivot = $product->stores->first()?->pivot;
@@ -47,27 +48,28 @@ class MobileProductController extends Controller
                     : (float) $product->price;
 
                 return [
-                    'id'                => $product->id,
-                    'code'              => $product->code,
-                    'name'              => $product->name,
-                    'emoji'             => null, // sementara — bisa diisi nanti
-                    'image_url'         => $product->image
-                        ? Storage::disk('public')->url($product->image)
+                    'id' => $product->id,
+                    'code' => $product->code,
+                    'name' => $product->name,
+                    'emoji' => null,
+                    'image_url' => $product->image
+                        ? asset('storage/' . $product->image)
                         : null,
-                    'price'             => $storePrice,
-                    'discount_price'    => $product->discount_price !== null
+                    'price' => $storePrice,
+                    'discount_price' => $product->discount_price !== null
                         ? (float) $product->discount_price
                         : null,
-                    'minimal_discount'  => $product->minimal_discount,
-                    'is_active'         => (bool) $product->is_active,
+                    'minimal_discount' => $product->minimal_discount,
+                    'is_active' => (bool) $product->is_active,
+                    'is_available' => (bool) ($pivot?->is_available ?? false),
                 ];
             });
 
         return response()->json([
-            'data'  => $products,
-            'meta'  => [
-                'store_id'    => $storeId,
-                'total'       => $products->count(),
+            'data' => $products,
+            'meta' => [
+                'store_id' => $storeId,
+                'total' => $products->count(),
             ],
         ]);
     }

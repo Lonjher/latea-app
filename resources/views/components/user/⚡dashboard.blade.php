@@ -53,19 +53,17 @@ new #[Title('Dashboard Kasir')] class extends Component {
             )
             ->groupBy('sale_items.product_id', 'sale_items.product_name')
             ->orderByDesc('total_qty')
-            ->take(10)
             ->get();
 
         /* ── TRANSAKSI TERBARU SAYA (kasir ini) ── */
         $myRecentSales = (clone $myQuery)
             ->with(['store', 'items'])
             ->orderByDesc('sale_date')
-            ->take(5)
+            ->take($topProducts->count())
             ->get();
 
         /* ── PRODUK UNIK (produk yang saya jual hari ini) ── */
         $myUniqueProducts = DB::table('sale_items')->join('sales', 'sales.id', '=', 'sale_items.sale_id')->where('sales.status', 'completed')->where('sales.store_id', $storeId)->where('sales.cashier_id', $user->id)->whereDate('sales.sale_date', $today)->distinct('sale_items.product_id')->count('sale_items.product_id');
-
         /* ── PRODUK YANG DI-ASSIGN KE TOKO INI ── */
         $storeProducts = \App\Models\Product::query()
             ->whereHas('stores', fn($q) => $q->where('stores.id', $storeId))
@@ -78,7 +76,7 @@ new #[Title('Dashboard Kasir')] class extends Component {
                     'id' => $product->id,
                     'name' => $product->name,
                     'code' => $product->code,
-                    'image_url' => $product->image_url ?? null,
+                    'image_url' => $product->image ?? null,
                     'emoji' => $product->emoji ?? '📦',
                     'is_active' => (bool) $product->is_active,
                     'is_available' => (bool) ($pivot?->is_available ?? false),
@@ -94,7 +92,7 @@ new #[Title('Dashboard Kasir')] class extends Component {
             'available' => $storeProducts->where('is_available', true)->where('is_active', true)->count(),
             'promo' => $storeProducts->where('is_active', true)->where('is_available', true)->whereNotNull('discount_price')->whereNotNull('minimal_discount')->count(),
         ];
-
+        // dd($topProducts);
         return [
             'user' => $user,
             'store' => $user->store,

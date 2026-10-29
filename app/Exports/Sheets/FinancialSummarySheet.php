@@ -7,12 +7,14 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 
-class FinancialSummarySheet implements FromArray, WithTitle, WithStyles, WithColumnWidths, ShouldAutoSize
+class FinancialSummarySheet implements FromArray, WithTitle, WithStyles, WithColumnWidths, ShouldAutoSize, WithEvents
 {
     public function __construct(
         protected array $metrics,
@@ -37,45 +39,43 @@ class FinancialSummarySheet implements FromArray, WithTitle, WithStyles, WithCol
     public function array(): array
     {
         $m = $this->metrics;
-
+        $periode = \Carbon\Carbon::parse($this->dateFrom)->translatedFormat('j M Y') . ' s/d ' . \Carbon\Carbon::parse($this->dateTo)->translatedFormat('j M Y');
         return [
             ['LAPORAN ANALISIS KEUANGAN', ''],
             ['', ''],
-            ['Periode', $this->dateFrom . ' s/d ' . $this->dateTo],
+            ['Periode', $periode],
             ['Store', $this->storeName ?? 'Semua Store'],
             ['Dibuat', now()->format('d M Y H:i')],
             ['', ''],
             ['A. PENDAPATAN', ''],
-            ['Total Penjualan (Revenue)', 'Rp ' . number_format($m['totalRevenue'], 0, ',', '.')],
+            ['Total Penjualan (Revenue)', $m['totalRevenue']],
             ['Jumlah Transaksi', $m['transactionCount']],
             ['Total Item Terjual', $m['totalItemsSold']],
             ['', ''],
             ['B. HARGA POKOK PENJUALAN (HPP)', ''],
-            ['Total HPP (COGS)', 'Rp ' . number_format($m['totalCogs'], 0, ',', '.')],
-            ['HPP % dari Revenue', $m['totalRevenue'] > 0
-                ? number_format(($m['totalCogs'] / $m['totalRevenue']) * 100, 2) . '%'
-                : '0%'],
+            ['Total HPP (COGS)', $m['totalCogs']],
+            ['HPP % dari Revenue', $m['totalRevenue'] > 0 ? $m['totalCogs'] / $m['totalRevenue'] : 0],
             ['', ''],
             ['C. LABA KOTOR (GROSS PROFIT)', ''],
-            ['Laba Kotor', 'Rp ' . number_format($m['grossProfit'], 0, ',', '.')],
-            ['Gross Margin', number_format($m['grossMarginPct'], 2) . '%'],
+            ['Laba Kotor', $m['grossProfit']],
+            ['Gross Margin', $m['grossMarginPct'] / 100],
             ['', ''],
             ['D. BIAYA OPERASIONAL (ESTIMASI)', ''],
-            ['Biaya Operasional', 'Rp ' . number_format($m['operationalCost'], 0, ',', '.')],
+            ['Biaya Operasional', $m['operationalCost']],
             ['', ''],
             ['E. LABA BERSIH (NET PROFIT)', ''],
-            ['Laba Bersih', 'Rp ' . number_format($m['netProfit'], 0, ',', '.')],
-            ['Net Margin', number_format($m['netMarginPct'], 2) . '%'],
+            ['Laba Bersih', $m['netProfit']],
+            ['Net Margin', $m['netMarginPct'] / 100],
             ['', ''],
             ['F. PRICING METRICS', ''],
-            ['Markup', number_format($m['markupPct'], 2) . '%'],
-            ['Harga Rata-rata per Item', 'Rp ' . number_format($m['avgSellingPrice'], 0, ',', '.')],
-            ['HPP Rata-rata per Item', 'Rp ' . number_format($m['avgCogsPerItem'], 0, ',', '.')],
-            ['Contribution Margin per Item', 'Rp ' . number_format($m['contributionMarginPerUnit'], 0, ',', '.')],
+            ['Markup', $m['markupPct'] / 100],
+            ['Harga Rata-rata per Item', $m['avgSellingPrice']],
+            ['HPP Rata-rata per Item', $m['avgCogsPerItem']],
+            ['Contribution Margin per Item', $m['contributionMarginPerUnit']],
             ['', ''],
             ['G. BREAK-EVEN ANALYSIS', ''],
-            ['Break-Even Point (unit)', number_format($m['bepUnits'], 0, ',', '.') . ' unit'],
-            ['Break-Even Revenue', 'Rp ' . number_format($m['bepRevenue'], 0, ',', '.')],
+            ['Break-Even Point (unit)', $m['bepUnits']],
+            ['Break-Even Revenue', $m['bepRevenue']],
         ];
     }
 
@@ -83,18 +83,52 @@ class FinancialSummarySheet implements FromArray, WithTitle, WithStyles, WithCol
     {
         return [
             1 => [
-                'font' => ['bold' => true, 'size' => 14, 'color' => ['rgb' => 'FFFFFF']],
+                'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => 'FFFFFF']],
                 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '84A98C']],
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             ],
-            7  => ['font' => ['bold' => true, 'size' => 11], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E7E5E4']]],
-            12 => ['font' => ['bold' => true, 'size' => 11], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E7E5E4']]],
-            16 => ['font' => ['bold' => true, 'size' => 11], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E7E5E4']]],
-            20 => ['font' => ['bold' => true, 'size' => 11], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E7E5E4']]],
-            23 => ['font' => ['bold' => true, 'size' => 11], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E7E5E4']]],
-            28 => ['font' => ['bold' => true, 'size' => 11], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E7E5E4']]],
-            34 => ['font' => ['bold' => true, 'size' => 11], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E7E5E4']]],
+            7  => ['font' => ['bold' => true, 'color' => ['rgb' => '1E293B']], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F5F5F4']]],
+            12 => ['font' => ['bold' => true, 'color' => ['rgb' => '1E293B']], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F5F5F4']]],
+            16 => ['font' => ['bold' => true, 'color' => ['rgb' => '1E293B']], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F5F5F4']]],
+            20 => ['font' => ['bold' => true, 'color' => ['rgb' => '1E293B']], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F5F5F4']]],
+            23 => ['font' => ['bold' => true, 'color' => ['rgb' => '1E293B']], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F5F5F4']]],
+            28 => ['font' => ['bold' => true, 'color' => ['rgb' => '1E293B']], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F5F5F4']]],
+            34 => ['font' => ['bold' => true, 'color' => ['rgb' => '1E293B']], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F5F5F4']]],
             'A' => ['font' => ['bold' => true]],
+        ];
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function(AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+
+                // Force Font Book Antiqua 10 ke seluruh area tabel
+                $sheet->getStyle('A1:B35')->getFont()->setName('Book Antiqua')->setSize(10);
+
+                // Borders
+                $sheet->getStyle('A1:B35')->applyFromArray([
+                    'borders' => [
+                        'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'E2E8F0']],
+                    ],
+                ]);
+
+                // Format Currencies (Rp)
+                foreach (['B8', 'B13', 'B17', 'B21', 'B24', 'B29', 'B30', 'B31', 'B35'] as $cell) {
+                    $sheet->getStyle($cell)->getNumberFormat()->setFormatCode('"Rp" #,##0');
+                }
+
+                // Format Percentages (%)
+                foreach (['B14', 'B18', 'B25', 'B28'] as $cell) {
+                    $sheet->getStyle($cell)->getNumberFormat()->setFormatCode('0.00%');
+                }
+
+                // Format Numbers
+                foreach (['B9', 'B10', 'B34'] as $cell) {
+                    $sheet->getStyle($cell)->getNumberFormat()->setFormatCode('#,##0');
+                }
+            },
         ];
     }
 }

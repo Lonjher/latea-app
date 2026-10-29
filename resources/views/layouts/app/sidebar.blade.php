@@ -65,7 +65,7 @@
                         </a>
                         {{-- Stores --}}
                         <a href="{{ route('admin.stores') }}" wire:navigate
-                            class="sidebar-item {{ request()->routeIs('admin.stores') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
+                            class="sidebar-item {{ request()->routeIs('admin.stores*') ? 'active' : '' }} flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-xs transition-colors">
                             <div class="flex items-center gap-2.5">
                                 {{-- Ikon Stores --}}
                                 <svg data-slot="icon" fill="none" stroke-width="1.5" stroke="currentColor"
@@ -210,7 +210,7 @@
                                 </svg>
 
 
-                                <span class="font-medium">{{ __('Pendapatan') }}</span>
+                                <span class="font-medium">{{ __('Analisis Penjualan') }}</span>
                             </div>
                         </a>
                     @endcan
@@ -301,7 +301,7 @@
                                 </svg>
 
 
-                                <span class="font-medium">{{ __('Pendapatan') }}</span>
+                                <span class="font-medium">{{ __('Analisis Penjualan') }}</span>
                             </div>
                         </a>
                     @endcan

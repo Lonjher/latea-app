@@ -1,10 +1,12 @@
 <?php
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use Livewire\Attributes\Title;
 use App\Models\Product;
 
 new #[Title('Manage Products')] class extends Component {
+    use WithPagination;
     public $search;
     public $filterActive = '';
 
